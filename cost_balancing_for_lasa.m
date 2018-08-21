@@ -138,6 +138,15 @@ switch meta_solver
         [x, fval, exitflag] = particleswarm(fh, nvars, lb, ub, options);
     case 'use_existing'
         x = [0.9910 0.0090]; % for G skill (5)
+        
+    case 'matlab'
+        lb = 0*ones(1,nvars);
+        ub = 1*ones(1,nvars);
+        
+        options = optimoptions('fmincon', 'Algorithm','sqp','MaxIterations',1000); 
+        
+        fh = @(x)objfcn(x, M);
+        [x, fval, exitflag] = fmincon(fh, rand(2,1), [], [], [1 1], 1, lb, ub, [], options);
 end
 
 % output of this section is the weight between the position and shape costs

@@ -46,4 +46,5 @@ J = 0;
 for ii=1:size(Demos,2)
     J = J + (sum(sum((Sols{ii} - Demos{ii}.').^2)));
 end
+% J = J + 1e10*abs((1-(w(1)+w(2)))); % soft constraint to normalize w1 and w2
 end
