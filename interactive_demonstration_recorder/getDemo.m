@@ -26,3 +26,33 @@ for ii=1:nDemo
     demos{1,ii}.pos = D{1,ii}'; % LASA dataset format
     demos{1,ii}.time = [dt:dt:size(D{1,ii},1)*dt];
 end
+
+%% resample
+nPoint = 100;
+xx = linspace(0,1,nPoint);
+Ds = cell(1,nDemo);
+for ii=1:nDemo
+    tt = linspace(0,1,size(D{ii},1));
+    xs = spline(tt,D{ii}(:,1),xx);
+    ys = spline(tt,D{ii}(:,2),xx);
+    Ds{ii} = [xs.' ys.'];
+end
+
+%% smoothing
+Dss = cell(1,nDemo);
+span = 0.3;
+for ii=1:nDemo
+    xs = smooth(Ds{ii}(:,1),span,'rloess');
+    ys = smooth(Ds{ii}(:,2),span,'rloess');
+    Dss{ii} = [xs ys];
+end
+
+gcf;hold off;clf
+hold on
+for ii=1:nDemo
+    plot(Dss{ii}(:,1),Dss{ii}(:,2),'linewidth',2);
+end
+title('Demonstrations');
+xlabel('x_1');ylabel('x_2');
+xlim(Xlim);ylim(Ylim);
+grid on;
