@@ -11,30 +11,42 @@ clc, clear, close all
 %--------------------------------
 % add paths
 addpath('LASA_dataset');
+addpath('synthetic_dataset');
 addpath('encoder');
 addpath('encoder/GMM_GMR');
 addpath('encoder/GMM_GMR/lib');
 addpath('meta_optimization');
+addpath('interactive_demonstration_recorder');
 % setup CVX toolbox
-run('C:\Users\Reza\Documents\MATLAB\cvx\cvx_setup.m')
+% run('C:\Users\Reza\Documents\MATLAB\cvx\cvx_setup.m')
 
 % get all skills from the dataset folder
-foldername = 'LASA_dataset';
+foldername = 'synthetic_dataset'; % folder name containing demos
 ext = 'mat';
 [skills,nskills] = getAllMatFiles(foldername, ext); % skills{1}
 
 %--------------------------------
 % SKILL LOOP (for more than 1 dataset)
 %--------------------------------
-doDownSampling = true;
+doDownSampling = 0; % 1 or 0
+doTimeAlignment = 1; % 1 or 0
 fixedWeight = 1;        %1e9 weight should not be used because the constraint is included in the optimization;
-kk = 15; %1:nskills
-load(skills{kk});       % loads a dataset including a demo cell and an average dt each demo includes pos, t, vel, acc, dt
+kk = 1; % skill number (choose between 1:nskills)
+load(skills{kk});% loads a dataset including a demo cell and an average dt each demo includes pos, t, vel, acc, dt
 nbDemos = size(demos,2);            % number of demos
 nbStatesPos = 5;                    % number of Gaussian Components (for position)
 nbStatesDelta = 5;                  % number of Gaussian Components (for laplacian)
 nbNodes = size(demos{1}.pos,2);     % number of points in each demonstrations
 nbDims   = size(demos{1}.pos,1);    % number of dimension (2D / 3D)
+
+%--------------------------------
+% Time align the demonstrations
+%--------------------------------
+
+if doTimeAlignment
+    demos = alignDataset(demos,1);
+end
+
 
 %--------------------------------
 % DownSample
@@ -52,8 +64,17 @@ else
         Demos{ii} = demos{ii}.pos;
     end
 end
+
 clear demos dt ext foldername stp ii doDownSampling
 
+%--------------------------------
+% Smooth the demonstrations
+%--------------------------------
+for ii=1:nbDemos
+    for j = 1:size(Demos{ii},1)
+        Demos{ii}(j,:) = smooth(Demos{ii}(j,:));
+    end
+end
 
 %--------------------------------
 % GMM/GMR - in position space for different nbstates for comp reasons
@@ -116,25 +137,27 @@ M.Mu_x = Mu_x;
 M.R_Sigma_x = R_Sigma_x;
 M.Demos = Demos;
 
-meta_solver =  'pso'; %'cmaes' 'use_existing';
+meta_solver =  'matlab'; % 'pso' 'matlab' 'cmaes' 'use_existing';
+nvars = 2; % number of varianbles/weights for meta optimization
 
 switch meta_solver
     case 'cmaes'
         %% CMA-ES
         opts.LBounds = 0; opts.UBounds = 1;
         % opts.Restarts = 3;  % doubles the popsize for each restart
-        [lambda_min, F_cmaes, E_cmaes, STOP, OUT] = cmaes('objfcn', 'rand(1)', 1/6, opts, M);
+        doSoftConstraint = 1;
+        [lambda_min, F_cmaes, E_cmaes, STOP, OUT] = cmaes('objfcn', 'rand(1)', 1/6, opts, M, doSoftConstraint);
         plotcmaesdat
         
     case 'pso'
         %% PSO
-        nvars = 2;
         lb = 0*ones(1,nvars);
-        ub = 10*ones(1,nvars);
+        ub = 1*ones(1,nvars);
         
         options = optimoptions('particleswarm','SwarmSize',2*nvars, 'Display', 'iter');
+        doSoftConstraint = 1;
         
-        fh = @(x)objfcn(x, M);
+        fh = @(x)objfcn(x, M, doSoftConstraint);
         [x, fval, exitflag] = particleswarm(fh, nvars, lb, ub, options);
     case 'use_existing'
         x = [0.9910 0.0090]; % for G skill (5)
@@ -142,10 +165,11 @@ switch meta_solver
     case 'matlab'
         lb = 0*ones(1,nvars);
         ub = 1*ones(1,nvars);
+        doSoftConstraint = 0; % no need for soft constraints since it is enforced as hard linear constraint
         
         options = optimoptions('fmincon', 'Algorithm','sqp','MaxIterations',1000); 
         
-        fh = @(x)objfcn(x, M);
+        fh = @(x)objfcn(x, M, doSoftConstraint);
         [x, fval, exitflag] = fmincon(fh, rand(2,1), [], [], [1 1], 1, lb, ub, [], options);
 end
 
@@ -158,9 +182,9 @@ P_(1,1) = fixedWeight;
 P_(2,end) = fixedWeight;
 
 figure;
-Sols = cell(1,4);
-whichDemos = [1 2 3 7];
-for ni = 1:4
+whichDemos = [1 2 3];
+Sols = cell(1,length(whichDemos));
+for ni = 1:length(whichDemos)
     % define the constraint
     G = [(Demos{whichDemos(ni)}(:,1)+0*rand(2,1)).' ; (Demos{whichDemos(ni)}(:,end)+0*rand(2,1)).']*fixedWeight;
     
@@ -179,7 +203,7 @@ for ni = 1:4
     Sols{1,ni} = sol;
     
     % plot
-    subplot(1,4,ni);hold on
+    subplot(1,length(whichDemos),ni);hold on
     title('GMM- \delta');
     for ii=1:nbDemos
         plot(Demos{ii}(1,:),Demos{ii}(2,:),'color',[0.5 0.5 0.5]);
@@ -196,7 +220,7 @@ for ni = 1:4
     xlabel('x_1','fontname','Times','fontsize',14);
 end
 
-for ii=1:4; subplot(1,4,ii);axis auto;end
+for ii=1:length(whichDemos); subplot(1,length(whichDemos),ii);axis auto;end
 return
 % save the important variables for plotting later
 filenamesaved = ['skill_' num2str(kk) '_trained.mat'];

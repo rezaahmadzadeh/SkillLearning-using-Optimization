@@ -7,6 +7,9 @@ nDemo = str2double(answer{1});
 
 h = figure('Position', [800, 100, 600, 600]);
 D = cell(1,nDemo);
+demos = D; % a variable to store demonstrations in the LASA dataset format
+dt = 0.01; % sampling interval
+
 for ii=1:nDemo
     title(['Draw Demo no.' num2str(ii) ' out of ' num2str(nDemo)]);
     xlabel('x_1');ylabel('x_2');
@@ -20,4 +23,6 @@ for ii=1:nDemo
     axis(A);
     xlim(Xlim);
     ylim(Ylim);
+    demos{1,ii}.pos = D{1,ii}'; % LASA dataset format
+    demos{1,ii}.time = [dt:dt:size(D{1,ii},1)*dt];
 end
