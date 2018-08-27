@@ -30,6 +30,7 @@ ext = 'mat';
 %--------------------------------
 doDownSampling = 0; % 1 or 0
 doTimeAlignment = 1; % 1 or 0
+doSmoothing = 1; % 1 or 0
 fixedWeight = 1;        %1e9 weight should not be used because the constraint is included in the optimization;
 kk = 1; % skill number (choose between 1:nskills)
 load(skills{kk});% loads a dataset including a demo cell and an average dt each demo includes pos, t, vel, acc, dt
@@ -70,9 +71,11 @@ clear demos dt ext foldername stp ii doDownSampling
 %--------------------------------
 % Smooth the demonstrations
 %--------------------------------
-for ii=1:nbDemos
-    for j = 1:size(Demos{ii},1)
-        Demos{ii}(j,:) = smooth(Demos{ii}(j,:));
+if doSmoothing
+    for ii=1:nbDemos
+        for j = 1:size(Demos{ii},1)
+            Demos{ii}(j,:) = smooth(Demos{ii}(j,:));
+        end
     end
 end
 
@@ -118,6 +121,11 @@ clear D1 t ns M repro1 expSigma1
 % clear bound_x bound_y ii
 
 %--------------------------------
+% GMM/GMR - in Gradient space
+%--------------------------------
+[Mu_g, R_Sigma_g, G] = trainGMMG(Demos, nbDims, nbDemos, nbNodes, nbStatesDelta);
+
+%--------------------------------
 % GMM/GMR - in Laplace space
 %--------------------------------
 [Mu_d, R_Sigma_d, L] = trainGMML(Demos, nbDims, nbDemos, nbNodes, nbStatesDelta);
@@ -133,14 +141,17 @@ M.nbDemos = nbDemos;
 M.L = L;
 M.Mu_d = Mu_d;
 M.R_Sigma_d = R_Sigma_d;
+M.G = G;
+M.Mu_g = Mu_g;
+M.R_Sigma_g = R_Sigma_g;
 M.Mu_x = Mu_x;
 M.R_Sigma_x = R_Sigma_x;
 M.Demos = Demos;
 
-meta_solver =  'matlab'; % 'pso' 'matlab' 'cmaes' 'use_existing';
-nvars = 2; % number of varianbles/weights for meta optimization
+metaSolver =  'matlab'; % 'pso' 'matlab' 'cmaes' 'use_existing';
+nVars = 3; % number of varianbles/weights for meta optimization
 
-switch meta_solver
+switch metaSolver
     case 'cmaes'
         %% CMA-ES
         opts.LBounds = 0; opts.UBounds = 1;
@@ -151,26 +162,26 @@ switch meta_solver
         
     case 'pso'
         %% PSO
-        lb = 0*ones(1,nvars);
-        ub = 1*ones(1,nvars);
+        lb = 0*ones(1,nVars);
+        ub = 1*ones(1,nVars);
         
-        options = optimoptions('particleswarm','SwarmSize',2*nvars, 'Display', 'iter');
+        options = optimoptions('particleswarm','SwarmSize',2*nVars, 'Display', 'iter');
         doSoftConstraint = 1;
         
         fh = @(x)objfcn(x, M, doSoftConstraint);
-        [x, fval, exitflag] = particleswarm(fh, nvars, lb, ub, options);
+        [x, fval, exitflag] = particleswarm(fh, nVars, lb, ub, options);
     case 'use_existing'
-        x = [0.9910 0.0090]; % for G skill (5)
+        x = [0.5 0.4910 0.0090]; % for G skill (5)
         
     case 'matlab'
-        lb = 0*ones(1,nvars);
-        ub = 1*ones(1,nvars);
+        lb = 0*ones(1,nVars);
+        ub = 1*ones(1,nVars);
         doSoftConstraint = 0; % no need for soft constraints since it is enforced as hard linear constraint
         
         options = optimoptions('fmincon', 'Algorithm','sqp','MaxIterations',1000); 
         
         fh = @(x)objfcn(x, M, doSoftConstraint);
-        [x, fval, exitflag] = fmincon(fh, rand(2,1), [], [], [1 1], 1, lb, ub, [], options);
+        [x, fval, exitflag] = fmincon(fh, rand(nVars,1), [], [], ones(1,nVars), 1, lb, ub, [], options);
 end
 
 % output of this section is the weight between the position and shape costs
@@ -186,17 +197,18 @@ whichDemos = [1 2 3];
 Sols = cell(1,length(whichDemos));
 for ni = 1:length(whichDemos)
     % define the constraint
-    G = [(Demos{whichDemos(ni)}(:,1)+0*rand(2,1)).' ; (Demos{whichDemos(ni)}(:,end)+0*rand(2,1)).']*fixedWeight;
+    posConstraints = [(Demos{whichDemos(ni)}(:,1)+0*rand(2,1)).' ; (Demos{whichDemos(ni)}(:,end)+0*rand(2,1)).']*fixedWeight;
     
     % CVX
     cvx_begin
     variable sol_x(nbNodes);
     variable sol_y(nbNodes);
     minimize(w(1) .*  ((R_Sigma_d * reshape((L*[sol_x sol_y] - Mu_d.').', numel(Mu_d),1)).' * (R_Sigma_d * reshape((L*[sol_x sol_y] - Mu_d.').', numel(Mu_d),1))) + ...
-        w(2) .* ((R_Sigma_x * reshape(([sol_x sol_y] - Mu_x.').', numel(Mu_x),1)).' * (R_Sigma_x * reshape(([sol_x, sol_y] - Mu_x.').', numel(Mu_x),1))))
+        w(2) .* ((R_Sigma_g * reshape((G*[sol_x sol_y] - Mu_g.').', numel(Mu_g),1)).' * (R_Sigma_g * reshape((G*[sol_x sol_y] - Mu_g.').', numel(Mu_g),1))) + ...
+        w(3) .* ((R_Sigma_x * reshape(([sol_x sol_y] - Mu_x.').', numel(Mu_x),1)).' * (R_Sigma_x * reshape(([sol_x, sol_y] - Mu_x.').', numel(Mu_x),1))))
     % minimize(f([sol_x, sol_y]));
     subject to
-    P_*[sol_x, sol_y] == G;
+    P_*[sol_x, sol_y] == posConstraints;
     cvx_end
     
     sol = [sol_x, sol_y];
