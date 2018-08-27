@@ -32,7 +32,8 @@ doDownSampling = 0; % 1 or 0
 doTimeAlignment = 1; % 1 or 0
 doSmoothing = 1; % 1 or 0
 fixedWeight = 1;        %1e9 weight should not be used because the constraint is included in the optimization;
-kk = 1; % skill number (choose between 1:nskills)
+
+kk = 2; % skill number (choose between 1:nskills)
 load(skills{kk});% loads a dataset including a demo cell and an average dt each demo includes pos, t, vel, acc, dt
 nbDemos = size(demos,2);            % number of demos
 nbStatesPos = 5;                    % number of Gaussian Components (for position)
@@ -157,7 +158,7 @@ switch metaSolver
         opts.LBounds = 0; opts.UBounds = 1;
         % opts.Restarts = 3;  % doubles the popsize for each restart
         doSoftConstraint = 1;
-        [lambda_min, F_cmaes, E_cmaes, STOP, OUT] = cmaes('objfcn', 'rand(1)', 1/6, opts, M, doSoftConstraint);
+        [x, F_cmaes, E_cmaes, STOP, OUT] = cmaes('objfcn', rand(nVars,1), 1/6, opts, M, doSoftConstraint);
         plotcmaesdat
         
     case 'pso'
