@@ -191,7 +191,7 @@ end
 % output of this section is the weight between the position and shape costs
 
 %% check the result of the meta-optimzation
-w = [0.2 0 0.8];     % weight
+w = x;     % weight
 P_ = zeros( numConstraintPoints, nbNodes);
 P_(1,1) = fixedWeight;
 P_(2,end) = fixedWeight;
