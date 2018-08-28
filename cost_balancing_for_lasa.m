@@ -7,33 +7,36 @@
 clc, clear, close all
 
 %--------------------------------
+% DESIGN PARAMETERS
+%--------------------------------
+doDownSampling = 1; % 1 or 0
+doTimeAlignment = 1; % 1 or 0
+doSmoothing = 1; % 1 or 0
+fixedWeight = 1; %1e9 weight should not be used because the constraint is included in the optimization;
+numConstraintPoints = 2; % number of points to constrain on the reproductions (currently the code constraints the initial and final point)
+foldername = 'RAIL_dataset/picking'; % folder name containing demos
+ext = 'mat'; % extension of the demos
+
+%--------------------------------
 % INITIALIZATION
 %--------------------------------
 % add paths
-addpath('LASA_dataset');
-addpath('synthetic_dataset');
-addpath('encoder');
-addpath('encoder/GMM_GMR');
-addpath('encoder/GMM_GMR/lib');
-addpath('meta_optimization');
-addpath('interactive_demonstration_recorder');
+addpath(genpath('LASA_dataset'));
+addpath(genpath('RAIL_dataset'));
+addpath(genpath('synthetic_dataset'));
+addpath(genpath('encoder'));
+addpath(genpath('meta_optimization'));
+addpath(genpath('interactive_demonstration_recorder'));
 % setup CVX toolbox
 % run('C:\Users\Reza\Documents\MATLAB\cvx\cvx_setup.m')
 
 % get all skills from the dataset folder
-foldername = 'synthetic_dataset'; % folder name containing demos
-ext = 'mat';
 [skills,nskills] = getAllMatFiles(foldername, ext); % skills{1}
 
 %--------------------------------
 % SKILL LOOP (for more than 1 dataset)
 %--------------------------------
-doDownSampling = 0; % 1 or 0
-doTimeAlignment = 1; % 1 or 0
-doSmoothing = 1; % 1 or 0
-fixedWeight = 1;        %1e9 weight should not be used because the constraint is included in the optimization;
-
-kk = 2; % skill number (choose between 1:nskills)
+kk = 1; % skill number (choose between 1:nskills)
 load(skills{kk});% loads a dataset including a demo cell and an average dt each demo includes pos, t, vel, acc, dt
 nbDemos = size(demos,2);            % number of demos
 nbStatesPos = 5;                    % number of Gaussian Components (for position)
@@ -81,14 +84,14 @@ if doSmoothing
 end
 
 %--------------------------------
-% GMM/GMR - in position space for different nbstates for comp reasons
+% GMM/GMR - in position space for different nbstates for comparisons
 %--------------------------------
 Gmms = cell(1,4);                       % to save GMM/GMR results
 D1 = zeros(nbDims+1, nbDemos*nbNodes);  % restructuring the data
 t = 1:nbNodes;                          % index
 D1(1,:) = repmat(t, 1, nbDemos);
 for ii=1:nbDemos
-    D1(2:3, (ii-1)*nbNodes+1:ii*nbNodes) = Demos{ii};
+    D1(2:nbDims+1, (ii-1)*nbNodes+1:ii*nbNodes) = Demos{ii};
 end
 
 for ns = 4:7
@@ -188,8 +191,8 @@ end
 % output of this section is the weight between the position and shape costs
 
 %% check the result of the meta-optimzation
-w = x;     % weight
-P_ = zeros( nbDims, nbNodes);
+w = [0.2 0 0.8];     % weight
+P_ = zeros( numConstraintPoints, nbNodes);
 P_(1,1) = fixedWeight;
 P_(2,end) = fixedWeight;
 
@@ -198,39 +201,74 @@ whichDemos = [1 2 3];
 Sols = cell(1,length(whichDemos));
 for ni = 1:length(whichDemos)
     % define the constraint
-    posConstraints = [(Demos{whichDemos(ni)}(:,1)+0*rand(2,1)).' ; (Demos{whichDemos(ni)}(:,end)+0*rand(2,1)).']*fixedWeight;
+    posConstraints = [(Demos{whichDemos(ni)}(:,1)+0*rand(nbDims,1)).' ; (Demos{whichDemos(ni)}(:,end)+0*rand(nbDims,1)).']*fixedWeight;
     
     % CVX
-    cvx_begin
-    variable sol_x(nbNodes);
-    variable sol_y(nbNodes);
-    minimize(w(1) .*  ((R_Sigma_d * reshape((L*[sol_x sol_y] - Mu_d.').', numel(Mu_d),1)).' * (R_Sigma_d * reshape((L*[sol_x sol_y] - Mu_d.').', numel(Mu_d),1))) + ...
-        w(2) .* ((R_Sigma_g * reshape((G*[sol_x sol_y] - Mu_g.').', numel(Mu_g),1)).' * (R_Sigma_g * reshape((G*[sol_x sol_y] - Mu_g.').', numel(Mu_g),1))) + ...
-        w(3) .* ((R_Sigma_x * reshape(([sol_x sol_y] - Mu_x.').', numel(Mu_x),1)).' * (R_Sigma_x * reshape(([sol_x, sol_y] - Mu_x.').', numel(Mu_x),1))))
-    % minimize(f([sol_x, sol_y]));
-    subject to
-    P_*[sol_x, sol_y] == posConstraints;
-    cvx_end
-    
-    sol = [sol_x, sol_y];
-    Sols{1,ni} = sol;
-    
-    % plot
-    subplot(1,length(whichDemos),ni);hold on
-    title('GMM- \delta');
-    for ii=1:nbDemos
-        plot(Demos{ii}(1,:),Demos{ii}(2,:),'color',[0.5 0.5 0.5]);
+    if nbDims ==2
+        cvx_begin
+        variable sol_x(nbNodes);
+        variable sol_y(nbNodes);
+        minimize(w(1) .*  ((R_Sigma_d * reshape((L*[sol_x sol_y] - Mu_d.').', numel(Mu_d),1)).' * (R_Sigma_d * reshape((L*[sol_x sol_y] - Mu_d.').', numel(Mu_d),1))) + ...
+            w(2) .* ((R_Sigma_g * reshape((G*[sol_x sol_y] - Mu_g.').', numel(Mu_g),1)).' * (R_Sigma_g * reshape((G*[sol_x sol_y] - Mu_g.').', numel(Mu_g),1))) + ...
+            w(3) .* ((R_Sigma_x * reshape(([sol_x sol_y] - Mu_x.').', numel(Mu_x),1)).' * (R_Sigma_x * reshape(([sol_x, sol_y] - Mu_x.').', numel(Mu_x),1))))
+        % minimize(f([sol_x, sol_y]));
+        subject to
+        P_*[sol_x, sol_y] == posConstraints;
+        cvx_end
+        sol = [sol_x, sol_y];
+        Sols{1,ni} = sol;
+        
+        % plot
+        subplot(1,length(whichDemos),ni);hold on
+        title('GMM- \delta');
+        for ii=1:nbDemos
+            plot(Demos{ii}(1,:),Demos{ii}(2,:),'color',[0.5 0.5 0.5]);
+        end
+        plot(sol(:,1),sol(:,2),'linewidth',2)
+        plot(Mu_x(1,:),Mu_x(2,:),'--r','linewidth',2)
+        bound_x = abs(max(sol_x) - min(sol_x))*0.1;
+        bound_y = abs(max(sol_y) - min(sol_y))*0.1;
+        axis([min(sol(:,1))-bound_x max(sol(:,1))+bound_x min(sol(:,2))-bound_y max(sol(:,2))+bound_y]);
+        xticklabels([]);
+        yticklabels([]);
+        box on; grid on;
+        ylabel('x_2','fontname','Times','fontsize',14);
+        xlabel('x_1','fontname','Times','fontsize',14);
+    else
+        if nbDims == 3
+            cvx_begin
+            variable sol_x(nbNodes);
+            variable sol_y(nbNodes);
+            variable sol_z(nbNodes);
+            minimize(w(1) .*  ((R_Sigma_d * reshape((L*[sol_x sol_y sol_z] - Mu_d.').', numel(Mu_d),1)).' * (R_Sigma_d * reshape((L*[sol_x sol_y sol_z] - Mu_d.').', numel(Mu_d),1))) + ...
+                w(2) .* ((R_Sigma_g * reshape((G*[sol_x sol_y sol_z] - Mu_g.').', numel(Mu_g),1)).' * (R_Sigma_g * reshape((G*[sol_x sol_y sol_z] - Mu_g.').', numel(Mu_g),1))) + ...
+                w(3) .* ((R_Sigma_x * reshape(([sol_x sol_y sol_z] - Mu_x.').', numel(Mu_x),1)).' * (R_Sigma_x * reshape(([sol_x, sol_y sol_z] - Mu_x.').', numel(Mu_x),1))))
+            % minimize(f([sol_x, sol_y sol_z]));
+            subject to
+            P_*[sol_x, sol_y sol_z] == posConstraints;
+            cvx_end
+            sol = [sol_x, sol_y sol_z];
+
+            % plot
+            subplot(1,length(whichDemos),ni);hold on
+            title('GMM- \delta');
+            for ii=1:nbDemos
+                plot3(Demos{ii}(1,:),Demos{ii}(2,:),Demos{ii}(3,:),'color',[0.5 0.5 0.5]);
+            end
+            plot3(sol(:,1),sol(:,2),sol(:,3),'linewidth',2)
+            plot3(Mu_x(1,:),Mu_x(2,:),Mu_x(3,:),'--r','linewidth',2)
+            axis('auto');
+            xticklabels([]);
+            yticklabels([]);
+            zticklabels([]);
+            box on; grid on;
+            zlabel('z_1','fontname','Times','fontsize',14);
+            ylabel('x_2','fontname','Times','fontsize',14);
+            xlabel('x_1','fontname','Times','fontsize',14);
+        else
+            error("The current version of the software can only handle 2 and 3 dimensional spaces!")
+        end
     end
-    plot(sol(:,1),sol(:,2),'linewidth',2)
-    plot(Mu_x(1,:),Mu_x(2,:),'--r','linewidth',2)
-    bound_x = abs(max(sol_x) - min(sol_x))*0.1;
-    bound_y = abs(max(sol_y) - min(sol_y))*0.1;
-    axis([min(sol(:,1))-bound_x max(sol(:,1))+bound_x min(sol(:,2))-bound_y max(sol(:,2))+bound_y]);
-    xticklabels([]);
-    yticklabels([]);
-    box on; grid on;
-    ylabel('x_2','fontname','Times','fontsize',14);
-    xlabel('x_1','fontname','Times','fontsize',14);
 end
 
 for ii=1:length(whichDemos); subplot(1,length(whichDemos),ii);axis auto;end

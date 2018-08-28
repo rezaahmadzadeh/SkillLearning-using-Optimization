@@ -17,7 +17,8 @@ R_Sigma_g = M.R_Sigma_g;
 R_Sigma_x = M.R_Sigma_x;
 Demos = M.Demos;
 
-P_ = zeros( nbDims, nbNodes);
+numConstraintPoints = 2; % number of points to constrain (currently the code constraints the initial and final point)
+P_ = zeros( numConstraintPoints, nbNodes);
 P_(1,1) = fixedWeight;
 P_(2,end) = fixedWeight;
 % if w > 1, w=1; end
@@ -29,21 +30,40 @@ Sols = cell(1,nbDemos);
 
 for ni = 1:nbDemos
     % define the constraint
-    posConstraints = [(Demos{ni}(:,1)+0*rand(2,1)).' ; (Demos{ni}(:,end)+0*rand(2,1)).']*fixedWeight;
+    posConstraints = [(Demos{ni}(:,1)+0*rand(nbDims,1)).' ; (Demos{ni}(:,end)+0*rand(nbDims,1)).']*fixedWeight;
     
     % CVX
-    cvx_begin quiet
-    variable sol_x(nbNodes);
-    variable sol_y(nbNodes);
-    minimize(w(1) .*  ((R_Sigma_d * reshape((L*[sol_x sol_y] - Mu_d.').', numel(Mu_d),1)).' * (R_Sigma_d * reshape((L*[sol_x sol_y] - Mu_d.').', numel(Mu_d),1))) + ...
-        w(2) .* ((R_Sigma_g * reshape((G*[sol_x sol_y] - Mu_g.').', numel(Mu_g),1)).' * (R_Sigma_g * reshape((G*[sol_x sol_y] - Mu_g.').', numel(Mu_g),1))) + ...
-        w(3) .* ((R_Sigma_x * reshape(([sol_x sol_y] - Mu_x.').', numel(Mu_x),1)).' * (R_Sigma_x * reshape(([sol_x, sol_y] - Mu_x.').', numel(Mu_x),1))))
-    % minimize(f([sol_x, sol_y]));
-    subject to
-    P_*[sol_x, sol_y] == posConstraints;
-    cvx_end
     
-    sol = [sol_x, sol_y];
+    if nbDims == 2
+        cvx_begin quiet
+        variable sol_x(nbNodes);
+        variable sol_y(nbNodes);
+        minimize(w(1) .*  ((R_Sigma_d * reshape((L*[sol_x sol_y] - Mu_d.').', numel(Mu_d),1)).' * (R_Sigma_d * reshape((L*[sol_x sol_y] - Mu_d.').', numel(Mu_d),1))) + ...
+            w(2) .* ((R_Sigma_g * reshape((G*[sol_x sol_y] - Mu_g.').', numel(Mu_g),1)).' * (R_Sigma_g * reshape((G*[sol_x sol_y] - Mu_g.').', numel(Mu_g),1))) + ...
+            w(3) .* ((R_Sigma_x * reshape(([sol_x sol_y] - Mu_x.').', numel(Mu_x),1)).' * (R_Sigma_x * reshape(([sol_x, sol_y] - Mu_x.').', numel(Mu_x),1))))
+            % minimize(f([sol_x, sol_y]));
+        subject to
+        P_*[sol_x, sol_y] == posConstraints;
+        cvx_end
+        sol = [sol_x, sol_y];
+    else
+        if nbDims == 3
+            cvx_begin quiet
+            variable sol_x(nbNodes);
+            variable sol_y(nbNodes);
+            variable sol_z(nbNodes);
+            minimize(w(1) .*  ((R_Sigma_d * reshape((L*[sol_x sol_y sol_z] - Mu_d.').', numel(Mu_d),1)).' * (R_Sigma_d * reshape((L*[sol_x sol_y sol_z] - Mu_d.').', numel(Mu_d),1))) + ...
+                w(2) .* ((R_Sigma_g * reshape((G*[sol_x sol_y sol_z] - Mu_g.').', numel(Mu_g),1)).' * (R_Sigma_g * reshape((G*[sol_x sol_y sol_z] - Mu_g.').', numel(Mu_g),1))) + ...
+                w(3) .* ((R_Sigma_x * reshape(([sol_x sol_y sol_z] - Mu_x.').', numel(Mu_x),1)).' * (R_Sigma_x * reshape(([sol_x, sol_y sol_z] - Mu_x.').', numel(Mu_x),1))))            
+            subject to
+            P_*[sol_x, sol_y sol_z] == posConstraints;
+            cvx_end
+            sol = [sol_x, sol_y sol_z];
+        else
+            error("The current version of the software can only handle 2 and 3 dimensional spaces!")
+        end
+    end
+    
     Sols{1,ni} = sol;
 end
 

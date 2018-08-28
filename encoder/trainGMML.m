@@ -29,7 +29,7 @@ tt = 1:nbNodesMod;
 D2(1,:) = repmat(tt,1,nbDemos);
 
 for ii=1:nbDemos
-    D2(2:3,(ii-1)*nbNodesMod+1:ii*nbNodesMod) = delta{ii}.'; %demos{ii}.pos;
+    D2(2:nbDims+1,(ii-1)*nbNodesMod+1:ii*nbNodesMod) = delta{ii}.'; %demos{ii}.pos;
 end
 
 % train GMM
@@ -38,7 +38,7 @@ M2 = encodeGMM(D2, nbNodesMod, nbStates);
 % reproduce GMR
 [repro2, expSigma2] = reproGMM(M2);
 
-Mu_d = repro2(2:3,:);
+Mu_d = repro2(2:nbDims+1,:);
 Sigma_d = expSigma2;
 Sigma_d_ = [];
 for ii=1:size(Sigma_d,3)
