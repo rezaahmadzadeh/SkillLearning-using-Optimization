@@ -13,8 +13,8 @@ doDownSampling = 1; % 1 or 0
 doTimeAlignment = 1; % 1 or 0
 doSmoothing = 1; % 1 or 0
 fixedWeight = 1; %1e9 weight should not be used because the constraint is included in the optimization;
-doConstraintIntialPoint = 1; %1 or 0
-doConstraintEndPoint = 1; %1 or 0
+doConstraintIntialPoint = 1; % currently only the value 1 is supported
+doConstraintEndPoint = 1; % currently only the value 1 is supported
 viaPoints = []; % a nbDim x (numConstraintPoints-2) matrix in which each column represents a via point (EXCLUDING start and end point)
 viaPointsTime = []; % a 1 x (numConstraintPoints-2) matrix in which each element represents the time at which the corresponding element of viaPoints has to be enforced
 foldername = 'RAIL_dataset/picking'; % folder name containing demos
@@ -175,6 +175,10 @@ M.Mu_x = Mu_x;
 M.R_Sigma_x = R_Sigma_x;
 M.Demos = Demos;
 M.scalingFactors = scalingFactors;
+M.doConstraintIntialPoint = doConstraintIntialPoint;
+M.doConstraintEndPoint = doConstraintEndPoint;
+M.viaPoints = viaPoints;
+M.viaPointsTime = viaPointsTime;
 
 
 metaSolver =  'matlab'; % 'pso' 'matlab' 'cmaes' 'use_existing';

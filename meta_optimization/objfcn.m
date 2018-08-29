@@ -17,11 +17,33 @@ R_Sigma_g = M.R_Sigma_g;
 R_Sigma_x = M.R_Sigma_x;
 Demos = M.Demos;
 scalingFactors = M.scalingFactors;
+viaPoints = M.viaPoints;
+viaPointsTime = M.viaPointsTime;
+doConstraintIntialPoint = M.doConstraintIntialPoint;
+doConstraintEndPoint = M.doConstraintEndPoint;
 
-numConstraintPoints = 2; % number of points to constrain (currently the code constraints the initial and final point)
-P_ = zeros( numConstraintPoints, nbNodes);
-P_(1,1) = fixedWeight;
-P_(2,end) = fixedWeight;
+numViaPoints = length(viaPointsTime);
+numConstraintPoints = numViaPoints + doConstraintIntialPoint + doConstraintEndPoint;
+
+P_ = zeros((numConstraintPoints), nbNodes);
+
+P_index = 1;
+if(doConstraintIntialPoint)
+    P_(P_index,1) = fixedWeight; % initial point
+    P_index = P_index + 1;
+end
+
+if(doConstraintEndPoint)
+    P_(P_index,end) = fixedWeight; % end point
+    P_index = P_index + 1;
+end
+
+for i = 1:numViaPoints
+    P_(P_index,viaPointsTime(i)) = fixedWeight;
+    
+    P_index = P_index + 1;
+end
+
 % if w > 1, w=1; end
 % if w < 0, w=0; end
 disp(['Weights: ' num2str(reshape(w,[1,length(w)]))]);
@@ -31,7 +53,7 @@ Sols = cell(1,nbDemos);
 
 for ni = 1:nbDemos
     % define the constraint
-    posConstraints = [(Demos{ni}(:,1)+0*rand(nbDims,1)).' ; (Demos{ni}(:,end)+0*rand(nbDims,1)).']*fixedWeight;
+    posConstraints = [(Demos{ni}(:,1)+0*rand(nbDims,1)).' ; (Demos{ni}(:,end)+0*rand(nbDims,1)).'; viaPoints.']*fixedWeight;
     
     % CVX
     
