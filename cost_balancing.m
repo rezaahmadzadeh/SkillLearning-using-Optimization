@@ -13,7 +13,10 @@ doDownSampling = 1; % 1 or 0
 doTimeAlignment = 1; % 1 or 0
 doSmoothing = 1; % 1 or 0
 fixedWeight = 1; %1e9 weight should not be used because the constraint is included in the optimization;
-numConstraintPoints = 2; % number of points to constrain on the reproductions (currently the code constraints the initial and final point)
+doConstraintIntialPoint = 1; %1 or 0
+doConstraintEndPoint = 1; %1 or 0
+viaPoints = []; % a nbDim x (numConstraintPoints-2) matrix in which each column represents a via point (EXCLUDING start and end point)
+viaPointsTime = []; % a 1 x (numConstraintPoints-2) matrix in which each element represents the time at which the corresponding element of viaPoints has to be enforced
 foldername = 'RAIL_dataset/picking'; % folder name containing demos
 ext = 'mat'; % extension of the demos
 
@@ -51,7 +54,6 @@ nbDims   = size(demos{1}.pos,1);    % number of dimension (2D / 3D)
 if doTimeAlignment
     demos = alignDataset(demos,1);
 end
-
 
 %--------------------------------
 % DownSample
@@ -104,6 +106,16 @@ end
 clear D1 t ns M repro1 expSigma1
 
 %--------------------------------
+% GMM/GMR - in Laplace space
+%--------------------------------
+[Mu_d, R_Sigma_d, L] = trainGMML(Demos, nbDims, nbDemos, nbNodes, nbStatesDelta);
+
+%--------------------------------
+% GMM/GMR - in Gradient space
+%--------------------------------
+[Mu_g, R_Sigma_g, G] = trainGMMG(Demos, nbDims, nbDemos, nbNodes, nbStatesDelta);
+
+%--------------------------------
 % GMM/GMR - in position space
 %--------------------------------
 [Mu_x, R_Sigma_x] = trainGMM(Demos, nbDims, nbDemos, nbNodes, nbStatesPos);
@@ -125,14 +137,25 @@ clear D1 t ns M repro1 expSigma1
 % clear bound_x bound_y ii
 
 %--------------------------------
-% GMM/GMR - in Gradient space
+% Scaling the error terms
 %--------------------------------
-[Mu_g, R_Sigma_g, G] = trainGMMG(Demos, nbDims, nbDemos, nbNodes, nbStatesDelta);
+for i = 1:nbDemos
+% error_d(i) = ((R_Sigma_d * reshape((L*[Demos{1,i}(1,:)' Demos{1,i}(2,:)' Demos{1,i}(3,:)'] - Mu_d.').', numel(Mu_d),1)).' * (R_Sigma_d * reshape((L*[Demos{1,i}(1,:)' Demos{1,i}(2,:)' Demos{1,i}(3,:)'] - Mu_d.').', numel(Mu_d),1)));
+error_d(i) = ((R_Sigma_d * reshape((L*Demos{1,i}.' - Mu_d.').', numel(Mu_d),1)).' * (R_Sigma_d * reshape((L*Demos{1,i}.' - Mu_d.').', numel(Mu_d),1)));
+end
+meanError_d = mean(error_d);
 
-%--------------------------------
-% GMM/GMR - in Laplace space
-%--------------------------------
-[Mu_d, R_Sigma_d, L] = trainGMML(Demos, nbDims, nbDemos, nbNodes, nbStatesDelta);
+for i = 1:nbDemos
+error_g(i) = (R_Sigma_g * reshape((G*Demos{1,i}.' - Mu_g.').', numel(Mu_g),1)).' * (R_Sigma_g * reshape((G*Demos{1,i}.' - Mu_g.').', numel(Mu_g),1));
+end
+meanError_g = mean(error_g);
+
+for i = 1:nbDemos
+error_x(i) = (R_Sigma_x * reshape((Demos{1,i}.' - Mu_x.').', numel(Mu_x),1)).' * (R_Sigma_x * reshape((Demos{1,i}.' - Mu_x.').', numel(Mu_x),1));
+end
+meanError_x = mean(error_x);
+
+scalingFactors = [meanError_d meanError_g meanError_x]./sum([meanError_d meanError_g meanError_x]);
 
 %--------------------------------
 % META-OPTIMIZATION
@@ -151,6 +174,8 @@ M.R_Sigma_g = R_Sigma_g;
 M.Mu_x = Mu_x;
 M.R_Sigma_x = R_Sigma_x;
 M.Demos = Demos;
+M.scalingFactors = scalingFactors;
+
 
 metaSolver =  'matlab'; % 'pso' 'matlab' 'cmaes' 'use_existing';
 nVars = 3; % number of varianbles/weights for meta optimization
@@ -175,7 +200,7 @@ switch metaSolver
         fh = @(x)objfcn(x, M, doSoftConstraint);
         [x, fval, exitflag] = particleswarm(fh, nVars, lb, ub, options);
     case 'use_existing'
-        x = [0.5 0.4910 0.0090]; % for G skill (5)
+        x = [0.9 0.1 0.4]; % for G skill (5)
         
     case 'matlab'
         lb = 0*ones(1,nVars);
@@ -192,25 +217,44 @@ end
 
 %% check the result of the meta-optimzation
 w = x;     % weight
-P_ = zeros( numConstraintPoints, nbNodes);
-P_(1,1) = fixedWeight;
-P_(2,end) = fixedWeight;
+
+numViaPoints = length(viaPointsTime);
+numConstraintPoints = numViaPoints + doConstraintIntialPoint + doConstraintEndPoint;
+
+P_ = zeros((numConstraintPoints), nbNodes);
+
+P_index = 1;
+if(doConstraintIntialPoint)
+    P_(P_index,1) = fixedWeight; % initial point
+    P_index = P_index + 1;
+end
+
+if(doConstraintEndPoint)
+    P_(P_index,end) = fixedWeight; % end point
+    P_index = P_index + 1;
+end
+
+for i = 1:numViaPoints
+    P_(P_index,viaPointsTime(i)) = fixedWeight;
+    
+    P_index = P_index + 1;
+end
 
 figure;
 whichDemos = [1 2 3];
 Sols = cell(1,length(whichDemos));
 for ni = 1:length(whichDemos)
     % define the constraint
-    posConstraints = [(Demos{whichDemos(ni)}(:,1)+0*rand(nbDims,1)).' ; (Demos{whichDemos(ni)}(:,end)+0*rand(nbDims,1)).']*fixedWeight;
+    posConstraints = [(Demos{whichDemos(ni)}(:,1)+0*rand(nbDims,1)).' ; (Demos{whichDemos(ni)}(:,end)+0*rand(nbDims,1)).'; viaPoints.']*fixedWeight;
     
     % CVX
-    if nbDims ==2
+    if nbDims == 2
         cvx_begin
         variable sol_x(nbNodes);
         variable sol_y(nbNodes);
-        minimize(w(1) .*  ((R_Sigma_d * reshape((L*[sol_x sol_y] - Mu_d.').', numel(Mu_d),1)).' * (R_Sigma_d * reshape((L*[sol_x sol_y] - Mu_d.').', numel(Mu_d),1))) + ...
-            w(2) .* ((R_Sigma_g * reshape((G*[sol_x sol_y] - Mu_g.').', numel(Mu_g),1)).' * (R_Sigma_g * reshape((G*[sol_x sol_y] - Mu_g.').', numel(Mu_g),1))) + ...
-            w(3) .* ((R_Sigma_x * reshape(([sol_x sol_y] - Mu_x.').', numel(Mu_x),1)).' * (R_Sigma_x * reshape(([sol_x, sol_y] - Mu_x.').', numel(Mu_x),1))))
+        minimize(w(1) .*  ((R_Sigma_d * reshape((L*[sol_x sol_y] - Mu_d.').', numel(Mu_d),1)).' * (R_Sigma_d * reshape((L*[sol_x sol_y] - Mu_d.').', numel(Mu_d),1)))./scalingFactors(1) + ...
+            w(2) .* ((R_Sigma_g * reshape((G*[sol_x sol_y] - Mu_g.').', numel(Mu_g),1)).' * (R_Sigma_g * reshape((G*[sol_x sol_y] - Mu_g.').', numel(Mu_g),1)))./scalingFactors(2) + ...
+            w(3) .* ((R_Sigma_x * reshape(([sol_x sol_y] - Mu_x.').', numel(Mu_x),1)).' * (R_Sigma_x * reshape(([sol_x, sol_y] - Mu_x.').', numel(Mu_x),1)))./scalingFactors(3))
         % minimize(f([sol_x, sol_y]));
         subject to
         P_*[sol_x, sol_y] == posConstraints;
@@ -240,9 +284,9 @@ for ni = 1:length(whichDemos)
             variable sol_x(nbNodes);
             variable sol_y(nbNodes);
             variable sol_z(nbNodes);
-            minimize(w(1) .*  ((R_Sigma_d * reshape((L*[sol_x sol_y sol_z] - Mu_d.').', numel(Mu_d),1)).' * (R_Sigma_d * reshape((L*[sol_x sol_y sol_z] - Mu_d.').', numel(Mu_d),1))) + ...
-                w(2) .* ((R_Sigma_g * reshape((G*[sol_x sol_y sol_z] - Mu_g.').', numel(Mu_g),1)).' * (R_Sigma_g * reshape((G*[sol_x sol_y sol_z] - Mu_g.').', numel(Mu_g),1))) + ...
-                w(3) .* ((R_Sigma_x * reshape(([sol_x sol_y sol_z] - Mu_x.').', numel(Mu_x),1)).' * (R_Sigma_x * reshape(([sol_x, sol_y sol_z] - Mu_x.').', numel(Mu_x),1))))
+            minimize(w(1) .*  ((R_Sigma_d * reshape((L*[sol_x sol_y sol_z] - Mu_d.').', numel(Mu_d),1)).' * (R_Sigma_d * reshape((L*[sol_x sol_y sol_z] - Mu_d.').', numel(Mu_d),1)))./scalingFactors(1) + ...
+                w(2) .* ((R_Sigma_g * reshape((G*[sol_x sol_y sol_z] - Mu_g.').', numel(Mu_g),1)).' * (R_Sigma_g * reshape((G*[sol_x sol_y sol_z] - Mu_g.').', numel(Mu_g),1)))./scalingFactors(2) + ...
+                w(3) .* ((R_Sigma_x * reshape(([sol_x sol_y sol_z] - Mu_x.').', numel(Mu_x),1)).' * (R_Sigma_x * reshape(([sol_x, sol_y sol_z] - Mu_x.').', numel(Mu_x),1)))./scalingFactors(3))
             % minimize(f([sol_x, sol_y sol_z]));
             subject to
             P_*[sol_x, sol_y sol_z] == posConstraints;
