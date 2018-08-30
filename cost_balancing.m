@@ -1,7 +1,6 @@
-%% Cost-balancing for LASA dataset
-% This file trains GMM and GMM-delta on lasa dataset
-% computes the best combination of shape and position objectives
-% using optimzization
+%% Automated cost-balancing for adaptivve skill acquisition
+% computes the best combination of psosition, gradient, and curvature 
+% objectives using optimzization
 
 
 clc, clear, close all
@@ -9,7 +8,7 @@ clc, clear, close all
 %--------------------------------
 % DESIGN PARAMETERS
 %--------------------------------
-doDownSampling = 0; % 1 or 0
+doDownSampling = 1; % 1 or 0
 doTimeAlignment = 1; % 1 or 0
 doSmoothing = 1; % 1 or 0
 fixedWeight = 1; %1e9 weight should not be used because the constraint is included in the optimization;
@@ -20,8 +19,9 @@ viaPointsTime = []; % a 1 x (numConstraintPoints-2) matrix in which each element
 nbStatesPos = 5; % number of Gaussian Components (for position)
 nbStatesGrad = 5; % number of Gaussian Components (for gradient)
 nbStatesDelta = 5; % number of Gaussian Components (for laplacian)
-folderName = 'LASA_dataset'; % folder name containing demos
-demoFileIndex = 2; % skill number (index of the file in an alphabetically arranged list of all files in folderName)
+demoFolderName = 'LASA_dataset'; % folder name containing demos
+saveFolderName = 'results'; % folder to which to save the results
+demoFileIndex = 10; % skill number (index of the file in an alphabetically arranged list of all files in folderName)
 ext = 'mat'; % extension of the demos
 
 %--------------------------------
@@ -38,7 +38,7 @@ addpath(genpath('interactive_demonstration_recorder'));
 % run('C:\Users\Reza\Documents\MATLAB\cvx\cvx_setup.m')
 
 % get all skills from the dataset folder
-[skills,nskills] = getAllMatFiles(folderName, ext); % skills{1}
+[skills,nskills] = getAllMatFiles(demoFolderName, ext); % skills{1}
 
 %--------------------------------
 % SKILL LOOP (for more than 1 dataset)
@@ -48,7 +48,7 @@ nbDemos = size(demos,2);            % number of demos
 nbNodes = size(demos{1}.pos,2);     % number of points in each demonstrations
 nbDims   = size(demos{1}.pos,1);    % number of dimension (2D / 3D)
 
-if strcmp(folderName, 'LASA_dataset')
+if strcmp(demoFolderName, 'LASA_dataset')
     for i = 1:size(demos,2)
         demos{1,i}.time = demos{1,i}.t;
     end
@@ -196,7 +196,9 @@ switch metaSolver
         opts.LBounds = 0; opts.UBounds = 1;
         % opts.Restarts = 3;  % doubles the popsize for each restart
         doSoftConstraint = 1;
-        [x, F_cmaes, E_cmaes, STOP, OUT] = cmaes('objfcn', rand(nVars,1), 1/6, opts, M, doSoftConstraint);
+        x0 = rand(nVars,1);
+        x0 = x0./sum(x0); % normalize to make sure the starting point is feasible
+        [x, F_cmaes, E_cmaes, STOP, OUT] = cmaes('objfcn', x0, 1/6, opts, M, doSoftConstraint);
         plotcmaesdat
         
     case 'pso'
@@ -210,7 +212,7 @@ switch metaSolver
         fh = @(x)objfcn(x, M, doSoftConstraint);
         [x, fval, exitflag] = particleswarm(fh, nVars, lb, ub, options);
     case 'use_existing'
-        x = [0.9 0.1 0.4]; % for G skill (5)
+        x = [0.8 0.1 0.1]; % for G skill (5)
         
     case 'matlab'
         lb = 0*ones(1,nVars);
@@ -220,13 +222,16 @@ switch metaSolver
         options = optimoptions('fmincon', 'Algorithm','sqp','MaxIterations',1000); 
         
         fh = @(x)objfcn(x, M, doSoftConstraint);
-        [x, fval, exitflag] = fmincon(fh, rand(nVars,1), [], [], ones(1,nVars), 1, lb, ub, [], options);
+%         x0 = [0.34 0.33 0.33]';
+        x0 = rand(nVars,1);
+        x0 = x0./sum(x0); % normalize to make sure the starting point is feasible
+        [x, fval, exitflag] = fmincon(fh, x0, [], [], ones(1,nVars), 1, lb, ub, [], options);
 end
 
 % output of this section is the weight between the position and shape costs
 
-%% check the result of the meta-optimzation
-w = x;     % weight
+%% Generate and plot reproductions
+w = [1 0 0];     % weight
 
 numViaPoints = length(viaPointsTime);
 numConstraintPoints = numViaPoints + doConstraintIntialPoint + doConstraintEndPoint;
@@ -250,8 +255,17 @@ for i = 1:numViaPoints
     P_index = P_index + 1;
 end
 
-figure;
-whichDemos = [1 2 3];
+% figure;
+figure('units','normalized','outerposition',[0 0 1 1]); hold on;
+title('Automated Cost Balancing');
+
+if nbDims == 2
+    plot(Mu_x(1,:),Mu_x(2,:),'--r','linewidth',2)
+else
+    plot3(Mu_x(1,:),Mu_x(2,:),Mu_x(3,:),'--r','linewidth',2)
+end
+
+whichDemos = 1:min(nbDemos,10);
 Sols = cell(1,length(whichDemos));
 for ni = 1:length(whichDemos)
     % define the constraint
@@ -270,16 +284,15 @@ for ni = 1:length(whichDemos)
         P_*[sol_x, sol_y] == posConstraints;
         cvx_end
         sol = [sol_x, sol_y];
-        Sols{1,ni} = sol;
+        Sols{1,ni} = sol.'; % to be consistent with 'Demos'
         
         % plot
-        subplot(1,length(whichDemos),ni);hold on
-        title('GMM- \delta');
+%         subplot(1,length(whichDemos),ni);hold on
         for ii=1:nbDemos
             plot(Demos{ii}(1,:),Demos{ii}(2,:),'color',[0.5 0.5 0.5]);
         end
-        plot(sol(:,1),sol(:,2),'linewidth',2)
-        plot(Mu_x(1,:),Mu_x(2,:),'--r','linewidth',2)
+        plot(sol(:,1),sol(:,2),'b','linewidth',2)
+%         plot(Mu_x(1,:),Mu_x(2,:),'--r','linewidth',2)
         bound_x = abs(max(sol_x) - min(sol_x))*0.1;
         bound_y = abs(max(sol_y) - min(sol_y))*0.1;
         axis([min(sol(:,1))-bound_x max(sol(:,1))+bound_x min(sol(:,2))-bound_y max(sol(:,2))+bound_y]);
@@ -288,6 +301,7 @@ for ni = 1:length(whichDemos)
         box on; grid on;
         ylabel('x_2','fontname','Times','fontsize',14);
         xlabel('x_1','fontname','Times','fontsize',14);
+        axis auto;
     else
         if nbDims == 3
             cvx_begin
@@ -302,16 +316,17 @@ for ni = 1:length(whichDemos)
             P_*[sol_x, sol_y sol_z] == posConstraints;
             cvx_end
             sol = [sol_x, sol_y sol_z];
+            Sols{1,ni} = sol.'; % to be consistent with 'Demos'
 
             % plot
-            subplot(1,length(whichDemos),ni);hold on
-            title('GMM- \delta');
+%             subplot(1,length(whichDemos),ni);hold on
             for ii=1:nbDemos
                 plot3(Demos{ii}(1,:),Demos{ii}(2,:),Demos{ii}(3,:),'color',[0.5 0.5 0.5]);
             end
-            plot3(sol(:,1),sol(:,2),sol(:,3),'linewidth',2)
-            plot3(Mu_x(1,:),Mu_x(2,:),Mu_x(3,:),'--r','linewidth',2)
+            plot3(sol(:,1),sol(:,2),sol(:,3),'b','linewidth',2)
+%             plot3(Mu_x(1,:),Mu_x(2,:),Mu_x(3,:),'--r','linewidth',2)
             axis('auto');
+            axis('square');
             xticklabels([]);
             yticklabels([]);
             zticklabels([]);
@@ -319,14 +334,31 @@ for ni = 1:length(whichDemos)
             zlabel('x_3','fontname','Times','fontsize',14);
             ylabel('x_2','fontname','Times','fontsize',14);
             xlabel('x_1','fontname','Times','fontsize',14);
+            axis auto;
         else
             error("The current version of the software can only handle 2 and 3 dimensional spaces!")
         end
     end
 end
+% for ii=1:length(whichDemos); subplot(1,length(whichDemos),ii);axis auto;end
 
-for ii=1:length(whichDemos); subplot(1,length(whichDemos),ii);axis auto;end
-return
-% save the important variables for plotting later
-filenamesaved = ['skill_' num2str(kk) '_trained.mat'];
-save(filenamesaved,'Demos','Gmms','Sols','w');
+disp('Weights: ')
+disp(w)
+
+%% save results
+
+% ask user if they would like to save the results 
+doSaveResults = input('Would you like a save these results: y or n?','s');
+% handle response
+switch doSaveResults
+    case 'y'
+        disp('Saving the trained models and the figure...')
+        filenamesaved = [saveFolderName '\' demoFolderName '\' erase(skills{demoFileIndex},".mat") '_trained'];
+        save([filenamesaved '.mat'],'Demos','Gmms','Sols','w','scalingFactors');
+        saveas(gcf,[filenamesaved '.fig'])
+        saveas(gcf,[filenamesaved '.png'])
+    case 'n'
+        disp('The results were NOT saved!');
+    otherwise
+        disp('Invalid choice! The results were NOT saved!');
+end
