@@ -21,7 +21,7 @@ nbStatesGrad = 5; % number of Gaussian Components (for gradient)
 nbStatesDelta = 5; % number of Gaussian Components (for laplacian)
 demoFolderName = 'LASA_dataset'; % folder name containing demos
 saveFolderName = 'results'; % folder to which to save the results
-demoFileIndex = 10; % skill number (index of the file in an alphabetically arranged list of all files in folderName)
+demoFileIndex = 9; % skill number (index of the file in an alphabetically arranged list of all files in folderName)
 ext = 'mat'; % extension of the demos
 
 %--------------------------------
@@ -231,7 +231,7 @@ end
 % output of this section is the weight between the position and shape costs
 
 %% Generate and plot reproductions
-w = [1 0 0];     % weight
+w = x;     % weight
 
 numViaPoints = length(viaPointsTime);
 numConstraintPoints = numViaPoints + doConstraintIntialPoint + doConstraintEndPoint;
