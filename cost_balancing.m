@@ -9,7 +9,7 @@ clc, clear, close all
 %--------------------------------
 % DESIGN PARAMETERS
 %--------------------------------
-doDownSampling = 1; % 1 or 0
+doDownSampling = 0; % 1 or 0
 doTimeAlignment = 1; % 1 or 0
 doSmoothing = 1; % 1 or 0
 fixedWeight = 1; %1e9 weight should not be used because the constraint is included in the optimization;
@@ -17,7 +17,11 @@ doConstraintIntialPoint = 1; % currently only the value 1 is supported
 doConstraintEndPoint = 1; % currently only the value 1 is supported
 viaPoints = []; % a nbDim x (numConstraintPoints-2) matrix in which each column represents a via point (EXCLUDING start and end point)
 viaPointsTime = []; % a 1 x (numConstraintPoints-2) matrix in which each element represents the time at which the corresponding element of viaPoints has to be enforced
-foldername = 'RAIL_dataset/picking'; % folder name containing demos
+nbStatesPos = 5; % number of Gaussian Components (for position)
+nbStatesGrad = 5; % number of Gaussian Components (for gradient)
+nbStatesDelta = 5; % number of Gaussian Components (for laplacian)
+folderName = 'LASA_dataset'; % folder name containing demos
+demoFileIndex = 2; % skill number (index of the file in an alphabetically arranged list of all files in folderName)
 ext = 'mat'; % extension of the demos
 
 %--------------------------------
@@ -34,19 +38,21 @@ addpath(genpath('interactive_demonstration_recorder'));
 % run('C:\Users\Reza\Documents\MATLAB\cvx\cvx_setup.m')
 
 % get all skills from the dataset folder
-[skills,nskills] = getAllMatFiles(foldername, ext); % skills{1}
+[skills,nskills] = getAllMatFiles(folderName, ext); % skills{1}
 
 %--------------------------------
 % SKILL LOOP (for more than 1 dataset)
 %--------------------------------
-kk = 1; % skill number (choose between 1:nskills)
-load(skills{kk});% loads a dataset including a demo cell and an average dt each demo includes pos, t, vel, acc, dt
+load(skills{demoFileIndex});% loads a dataset including a demo cell and an average dt each demo includes pos, t, vel, acc, dt
 nbDemos = size(demos,2);            % number of demos
-nbStatesPos = 5;                    % number of Gaussian Components (for position)
-nbStatesDelta = 5;                  % number of Gaussian Components (for laplacian)
 nbNodes = size(demos{1}.pos,2);     % number of points in each demonstrations
 nbDims   = size(demos{1}.pos,1);    % number of dimension (2D / 3D)
 
+if strcmp(folderName, 'LASA_dataset')
+    for i = 1:size(demos,2)
+        demos{1,i}.time = demos{1,i}.t;
+    end
+end
 %--------------------------------
 % Time align the demonstrations
 %--------------------------------
@@ -113,7 +119,7 @@ clear D1 t ns M repro1 expSigma1
 %--------------------------------
 % GMM/GMR - in Gradient space
 %--------------------------------
-[Mu_g, R_Sigma_g, G] = trainGMMG(Demos, nbDims, nbDemos, nbNodes, nbStatesDelta);
+[Mu_g, R_Sigma_g, G] = trainGMMG(Demos, nbDims, nbDemos, nbNodes, nbStatesGrad);
 
 %--------------------------------
 % GMM/GMR - in position space
@@ -310,7 +316,7 @@ for ni = 1:length(whichDemos)
             yticklabels([]);
             zticklabels([]);
             box on; grid on;
-            zlabel('z_1','fontname','Times','fontsize',14);
+            zlabel('x_3','fontname','Times','fontsize',14);
             ylabel('x_2','fontname','Times','fontsize',14);
             xlabel('x_1','fontname','Times','fontsize',14);
         else
