@@ -66,7 +66,6 @@ for ni = 1:nbDemos
     end
     
     % CVX
-    
     if nbDims == 2
         cvx_begin quiet
         variable sol_x(nbNodes);

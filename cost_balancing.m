@@ -364,7 +364,7 @@ switch doSaveResults
     case 'y'
         disp('Saving the trained models and the figure...')
         filenamesaved = [saveFolderName '\' demoFolderName '\' erase(skills{demoFileIndex},".mat") '_trained'];
-        save([filenamesaved '.mat'],'Demos','Gmms','Sols','w','scalingFactors');
+        save([filenamesaved '.mat'],'M','Demos','Gmms','Sols','w','scalingFactors');
         saveas(gcf,[filenamesaved '.fig'])
         saveas(gcf,[filenamesaved '.png'])
     case 'n'

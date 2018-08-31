@@ -1,4 +1,4 @@
-function [meanDTWD,stdDTWD] = compute_DTWD_stats(demos,repros)
+function [meanDTWD,stdDTWD,DTWD] = compute_DTWD_stats(demos,repros)
 % function to compute SEA statistics
 
 if iscell(demos) && iscell(repros)
@@ -9,8 +9,10 @@ if iscell(demos) && iscell(repros)
     meanDTWD = mean(DTWD);
     stdDTWD = std(DTWD);
 else
-    meanDTWD = DTW_dis(demos,repros);
+    DTWD = DTW_dis(demos,repros);
+    meanDTWD = DTWD;
     stdDTWD = [];
+    
 end
 
 

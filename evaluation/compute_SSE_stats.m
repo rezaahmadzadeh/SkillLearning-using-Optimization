@@ -1,4 +1,4 @@
-function [meanSSE,stdSSE] = compute_SSE_stats(demos,repros)
+function [meanSSE, stdSSE, SSE] = compute_SSE_stats(demos,repros)
 % function to compute SEA statistics
 
 if iscell(demos) && iscell(repros)
@@ -9,7 +9,8 @@ if iscell(demos) && iscell(repros)
     meanSSE = mean(SSE);
     stdSSE = std(SSE);
 else
-    meanSSE = (sum(sum((demos - repros).^2)));
+    SSE = (sum(sum((demos - repros).^2)));
+    meanSSE = SSE;
     stdSSE = [];
 end
 

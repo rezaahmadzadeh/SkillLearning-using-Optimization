@@ -1,4 +1,4 @@
-function [meanSEA,stdSEA] = compute_SEA_stats(demos,repros)
+function [meanSEA, stdSEA, SEA] = compute_SEA_stats(demos,repros)
 % function to compute SEA statistics
 
 if iscell(demos) && iscell(repros)
@@ -9,7 +9,8 @@ if iscell(demos) && iscell(repros)
     meanSEA = mean(SEA);
     stdSEA = std(SEA);
 else
-    meanSEA = swept_error_area(demos,repros);
+    SEA = swept_error_area(demos,repros);
+    meanSEA = SEA;
     stdSEA = [];
 end
 
