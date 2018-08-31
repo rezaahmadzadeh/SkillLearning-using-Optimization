@@ -13,15 +13,16 @@ for ii=1:nbDemos
 end
 
 % Apply constraints (boundary condition for first/last sampling point)
-G(1,:)       = [];
+% G(1,:)       = [];
 G(end,:)     = [];
 for ii=1:nbDemos
-    g{ii}(1,:) = [];
+%     g{ii}(1,:) = [];
     g{ii}(end,:) = [];
 end
 
 % restructure data
-nbNodesMod = nbNodes - 2;
+% nbNodesMod = nbNodes - 1;
+nbNodesMod = size(G,1);
 D2 = zeros(nbDims+1, nbDemos*nbNodesMod);
 % tt = linspace(0,1,nbNodesMod);
 tt = 1:nbNodesMod;

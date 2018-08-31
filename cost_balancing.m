@@ -15,13 +15,13 @@ fixedWeight = 1; %1e9 weight should not be used because the constraint is includ
 doConstraintIntialPoint = 1; % currently only the value 1 is supported
 doConstraintEndPoint = 1; % currently only the value 1 is supported
 viaPoints = []; % a nbDim x (numConstraintPoints-2) matrix in which each column represents a via point (EXCLUDING start and end point)
-viaPointsTime = []; % a 1 x (numConstraintPoints-2) matrix in which each element represents the time at which the corresponding element of viaPoints has to be enforced
+viaPointsTime = [32 65]; % a 1 x (numConstraintPoints-2) matrix in which each element represents the time at which the corresponding element of viaPoints has to be enforced
 nbStatesPos = 5; % number of Gaussian Components (for position)
 nbStatesGrad = 5; % number of Gaussian Components (for gradient)
 nbStatesDelta = 5; % number of Gaussian Components (for laplacian)
-demoFolderName = 'LASA_dataset'; % folder name containing demos
+demoFolderName = 'RAIL_dataset\picking'; % folder name containing demos
 saveFolderName = 'results'; % folder to which to save the results
-demoFileIndex = 25; % skill number (index of the file in an alphabetically arranged list of all files in folderName)
+demoFileIndex = 1; % skill number (index of the file in an alphabetically arranged list of all files in folderName)
 ext = 'mat'; % extension of the demos
 
 %--------------------------------
@@ -233,10 +233,10 @@ end
 %% Generate and plot reproductions
 w = x;     % weight
 
-numViaPoints = length(viaPointsTime);
-numConstraintPoints = numViaPoints + doConstraintIntialPoint + doConstraintEndPoint;
+nbViaPoints = length(viaPointsTime);
+nbConstraintPoints = nbViaPoints + doConstraintIntialPoint + doConstraintEndPoint;
 
-P_ = zeros((numConstraintPoints), nbNodes);
+P_ = zeros((nbConstraintPoints), nbNodes);
 
 P_index = 1;
 if(doConstraintIntialPoint)
@@ -249,7 +249,7 @@ if(doConstraintEndPoint)
     P_index = P_index + 1;
 end
 
-for i = 1:numViaPoints
+for i = 1:nbViaPoints
     P_(P_index,viaPointsTime(i)) = fixedWeight;
     
     P_index = P_index + 1;
@@ -269,7 +269,17 @@ whichDemos = 1:min(nbDemos,10);
 Sols = cell(1,length(whichDemos));
 for ni = 1:length(whichDemos)
     % define the constraint
-    posConstraints = [(Demos{whichDemos(ni)}(:,1)+0*rand(nbDims,1)).' ; (Demos{whichDemos(ni)}(:,end)+0*rand(nbDims,1)).'; viaPoints.']*fixedWeight;
+    posConstraints = [(Demos{whichDemos(ni)}(:,1)+0*rand(nbDims,1)).' ; (Demos{whichDemos(ni)}(:,end)+0*rand(nbDims,1)).']*fixedWeight;
+    
+    if ~isempty(viaPoints) % hard coded via points enforced independent of demonstrations
+        posConstraints = [posConstraints; viaPoints.'.*fixedWeight];
+    else
+        if ~isempty(viaPointsTime)
+            for i = 1:nbViaPoints
+                posConstraints = [posConstraints; Demos{whichDemos(ni)}(:,viaPointsTime(i)).'*fixedWeight];
+            end
+        end
+    end
     
     % CVX
     if nbDims == 2

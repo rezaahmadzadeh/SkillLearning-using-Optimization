@@ -22,10 +22,10 @@ viaPointsTime = M.viaPointsTime;
 doConstraintIntialPoint = M.doConstraintIntialPoint;
 doConstraintEndPoint = M.doConstraintEndPoint;
 
-numViaPoints = length(viaPointsTime);
-numConstraintPoints = numViaPoints + doConstraintIntialPoint + doConstraintEndPoint;
+nbViaPoints = length(viaPointsTime);
+nbConstraintPoints = nbViaPoints + doConstraintIntialPoint + doConstraintEndPoint;
 
-P_ = zeros((numConstraintPoints), nbNodes);
+P_ = zeros((nbConstraintPoints), nbNodes);
 
 P_index = 1;
 if(doConstraintIntialPoint)
@@ -38,7 +38,7 @@ if(doConstraintEndPoint)
     P_index = P_index + 1;
 end
 
-for i = 1:numViaPoints
+for i = 1:nbViaPoints
     P_(P_index,viaPointsTime(i)) = fixedWeight;
     
     P_index = P_index + 1;
@@ -53,7 +53,17 @@ Sols = cell(1,nbDemos);
 
 for ni = 1:nbDemos
     % define the constraint
-    posConstraints = [(Demos{ni}(:,1)+0*rand(nbDims,1)).' ; (Demos{ni}(:,end)+0*rand(nbDims,1)).'; viaPoints.']*fixedWeight;
+    posConstraints = [(Demos{ni}(:,1)+0*rand(nbDims,1)).' ; (Demos{ni}(:,end)+0*rand(nbDims,1)).']*fixedWeight;
+    
+    if ~isempty(viaPoints) % hard coded via points enforced independent of demonstrations
+        posConstraints = [posConstraints; viaPoints.'.*fixedWeight];
+    else
+        if ~isempty(viaPointsTime)
+            for i = 1:nbViaPoints
+                posConstraints = [posConstraints; Demos{ni}(:,viaPointsTime(i)).'*fixedWeight];
+            end
+        end
+    end
     
     % CVX
     

@@ -22,7 +22,8 @@ for ii=1:nbDemos
 end
 
 % restructure data
-nbNodesMod = nbNodes - 2;
+% nbNodesMod = nbNodes - 2;
+nbNodesMod = size(L,1);
 D2 = zeros(nbDims+1, nbDemos*nbNodesMod);
 % tt = linspace(0,1,nbNodesMod);
 tt = 1:nbNodesMod;
