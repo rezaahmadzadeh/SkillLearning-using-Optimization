@@ -1,13 +1,30 @@
-%% Automated cost-balancing for adaptivve skill acquisition
+%% Automated cost-balancing for skill acquisition in multiple coordinates
 % computes the best combination of psosition, gradient, and curvature 
 % objectives using optimzization
 
+%%
+%--------------------------------
+% Preamble
+%--------------------------------
 
 clc, clear, close all
 
+% add paths
+addpath(genpath('LASA_dataset'));
+addpath(genpath('RAIL_dataset'));
+addpath(genpath('synthetic_dataset'));
+addpath(genpath('encoder'));
+addpath(genpath('evaluation'));
+addpath(genpath('meta_optimization'));
+addpath(genpath('results'));
+addpath(genpath('interactive_demonstration_recorder'));
+% run('C:\Users\Reza\Documents\MATLAB\cvx\cvx_setup.m') % setup CVX toolbox
+
+%%
 %--------------------------------
-% DESIGN PARAMETERS
+% Design parameters
 %--------------------------------
+
 doDownSampling = 1; % 1 or 0
 doTimeAlignment = 1; % 1 or 0
 doSmoothing = 1; % 1 or 0
@@ -15,34 +32,23 @@ fixedWeight = 1; %1e9 weight should not be used because the constraint is includ
 doConstraintIntialPoint = 1; % currently only the value 1 is supported
 doConstraintEndPoint = 1; % currently only the value 1 is supported
 viaPoints = []; % a nbDim x (numConstraintPoints-2) matrix in which each column represents a via point (EXCLUDING start and end point)
-viaPointsTime = [32 65]; % a 1 x (numConstraintPoints-2) matrix in which each element represents the time at which the corresponding element of viaPoints has to be enforced
+viaPointsTime = []; % a 1 x (numConstraintPoints-2) matrix in which each element represents the time at which the corresponding element of viaPoints has to be enforced
 nbStatesPos = 5; % number of Gaussian Components (for position)
 nbStatesGrad = 5; % number of Gaussian Components (for gradient)
 nbStatesDelta = 5; % number of Gaussian Components (for laplacian)
-demoFolderName = 'RAIL_dataset\picking'; % folder name containing demos
+demoFolderName = 'LASA_dataset'; % folder name containing demos
 saveFolderName = 'results'; % folder to which to save the results
-demoFileIndex = 1; % skill number (index of the file in an alphabetically arranged list of all files in folderName)
+demoFileIndex = 5; % skill number (index of the file in an alphabetically arranged list of all files in folderName)
 ext = 'mat'; % extension of the demos
 
+%%
 %--------------------------------
-% INITIALIZATION
+% Load demonstrations
 %--------------------------------
-% add paths
-addpath(genpath('LASA_dataset'));
-addpath(genpath('RAIL_dataset'));
-addpath(genpath('synthetic_dataset'));
-addpath(genpath('encoder'));
-addpath(genpath('meta_optimization'));
-addpath(genpath('interactive_demonstration_recorder'));
-% setup CVX toolbox
-% run('C:\Users\Reza\Documents\MATLAB\cvx\cvx_setup.m')
 
 % get all skills from the dataset folder
 [skills,nskills] = getAllMatFiles(demoFolderName, ext); % skills{1}
 
-%--------------------------------
-% SKILL LOOP (for more than 1 dataset)
-%--------------------------------
 load(skills{demoFileIndex});% loads a dataset including a demo cell and an average dt each demo includes pos, t, vel, acc, dt
 nbDemos = size(demos,2);            % number of demos
 nbNodes = size(demos{1}.pos,2);     % number of points in each demonstrations
@@ -53,6 +59,8 @@ if strcmp(demoFolderName, 'LASA_dataset')
         demos{1,i}.time = demos{1,i}.t;
     end
 end
+
+%%
 %--------------------------------
 % Time align the demonstrations
 %--------------------------------
@@ -61,9 +69,11 @@ if doTimeAlignment
     demos = alignDataset(demos,1);
 end
 
+%%
 %--------------------------------
-% DownSample
+% Downsample the demonstrations
 %--------------------------------
+
 if doDownSampling
     Demos = cell(1,nbDemos);
     stp = floor(nbNodes / floor(nbNodes * 0.10));
@@ -80,9 +90,11 @@ end
 
 clear demos dt ext foldername stp ii doDownSampling
 
+%%
 %--------------------------------
 % Smooth the demonstrations
 %--------------------------------
+
 if doSmoothing
     for ii=1:nbDemos
         for j = 1:size(Demos{ii},1)
@@ -91,60 +103,54 @@ if doSmoothing
     end
 end
 
+%%
 %--------------------------------
 % GMM/GMR - in position space for different nbstates for comparisons
 %--------------------------------
-Gmms = cell(1,4);                       % to save GMM/GMR results
-D1 = zeros(nbDims+1, nbDemos*nbNodes);  % restructuring the data
-t = 1:nbNodes;                          % index
-D1(1,:) = repmat(t, 1, nbDemos);
-for ii=1:nbDemos
-    D1(2:nbDims+1, (ii-1)*nbNodes+1:ii*nbNodes) = Demos{ii};
-end
 
-for ns = 4:7
-    M = encodeGMM(D1, nbNodes, ns);
-    [repro1, expSigma1] = reproGMM(M);
-    M.repro = repro1;
-    M.expSigma = expSigma1;
-    Gmms{1,ns-3} = M;
-end
-clear D1 t ns M repro1 expSigma1
+% Gmms = cell(1,4);                       % to save GMM/GMR results
+% D1 = zeros(nbDims+1, nbDemos*nbNodes);  % restructuring the data
+% t = 1:nbNodes;                          % index
+% D1(1,:) = repmat(t, 1, nbDemos);
+% for ii=1:nbDemos
+%     D1(2:nbDims+1, (ii-1)*nbNodes+1:ii*nbNodes) = Demos{ii};
+% end
+% 
+% for ns = 4:7
+%     M = encodeGMM(D1, nbNodes, ns);
+%     [repro1, expSigma1] = reproGMM(M);
+%     M.repro = repro1;
+%     M.expSigma = expSigma1;
+%     Gmms{1,ns-3} = M;
+% end
+% clear D1 t ns M repro1 expSigma1
 
+%%
 %--------------------------------
 % GMM/GMR - in Laplace space
 %--------------------------------
+
 [Mu_d, R_Sigma_d, L] = trainGMML(Demos, nbDims, nbDemos, nbNodes, nbStatesDelta);
 
+%%
 %--------------------------------
 % GMM/GMR - in Gradient space
 %--------------------------------
+
 [Mu_g, R_Sigma_g, G] = trainGMMG(Demos, nbDims, nbDemos, nbNodes, nbStatesGrad);
 
+%%
 %--------------------------------
 % GMM/GMR - in position space
 %--------------------------------
+
 [Mu_x, R_Sigma_x] = trainGMM(Demos, nbDims, nbDemos, nbNodes, nbStatesPos);
-% figure;hold on;
-% title('GMM');
-% for ii=1:nbDemos
-%     plot(Demos{ii}(1,:),Demos{ii}(2,:),'color',[0.5 0.5 0.5]);
-% end
-% plot(Mu_x(1,:),Mu_x(2,:),'r','linewidth',2)
-% bound_x = abs(max(Mu_x(1,:)) - min(Mu_x(1,:)))*0.1;
-% bound_y = abs(max(Mu_x(2,:)) - min(Mu_x(2,:)))*0.1;
-% axis([min(Mu_x(1,:))-bound_x max(Mu_x(1,:))+bound_x min(Mu_x(2,:))-bound_y max(Mu_x(2,:))+bound_y]);
-% xticklabels([]);
-% yticklabels([]);
-% box on; grid on;
-% ylabel('x_2','fontname','Times','fontsize',14);
-% xlabel('x_1','fontname','Times','fontsize',14);
 
-% clear bound_x bound_y ii
+%% 
+%--------------------------------
+% Scale the error terms
+%--------------------------------
 
-%--------------------------------
-% Scaling the error terms
-%--------------------------------
 for i = 1:nbDemos
 % error_d(i) = ((R_Sigma_d * reshape((L*[Demos{1,i}(1,:)' Demos{1,i}(2,:)' Demos{1,i}(3,:)'] - Mu_d.').', numel(Mu_d),1)).' * (R_Sigma_d * reshape((L*[Demos{1,i}(1,:)' Demos{1,i}(2,:)' Demos{1,i}(3,:)'] - Mu_d.').', numel(Mu_d),1)));
 error_d(i) = ((R_Sigma_d * reshape((L*Demos{1,i}.' - Mu_d.').', numel(Mu_d),1)).' * (R_Sigma_d * reshape((L*Demos{1,i}.' - Mu_d.').', numel(Mu_d),1)));
@@ -163,10 +169,31 @@ meanError_x = mean(error_x);
 
 scalingFactors = [meanError_d meanError_g meanError_x]./sum([meanError_d meanError_g meanError_x]);
 
+%%
+% old plotting code
+% figure;hold on;
+% title('GMM');
+% for ii=1:nbDemos
+%     plot(Demos{ii}(1,:),Demos{ii}(2,:),'color',[0.5 0.5 0.5]);
+% end
+% plot(Mu_x(1,:),Mu_x(2,:),'r','linewidth',2)
+% bound_x = abs(max(Mu_x(1,:)) - min(Mu_x(1,:)))*0.1;
+% bound_y = abs(max(Mu_x(2,:)) - min(Mu_x(2,:)))*0.1;
+% axis([min(Mu_x(1,:))-bound_x max(Mu_x(1,:))+bound_x min(Mu_x(2,:))-bound_y max(Mu_x(2,:))+bound_y]);
+% xticklabels([]);
+% yticklabels([]);
+% box on; grid on;
+% ylabel('x_2','fontname','Times','fontsize',14);
+% xlabel('x_1','fontname','Times','fontsize',14);
+
+% clear bound_x bound_y ii
+
+%% 
 %--------------------------------
 % META-OPTIMIZATION
 %--------------------------------
-% initialization
+
+% pack all model details into M
 M.nbDims = nbDims;
 M.nbNodes = nbNodes;
 M.fixedWeight = fixedWeight;
@@ -211,10 +238,9 @@ switch metaSolver
         
         fh = @(x)objfcn(x, M, doSoftConstraint);
         [x, fval, exitflag] = particleswarm(fh, nVars, lb, ub, options);
-    case 'use_existing'
-        x = [0.8 0.1 0.1]; % for G skill (5)
-        
+
     case 'matlab'
+        %% MATLAB
         lb = 0*ones(1,nVars);
         ub = 1*ones(1,nVars);
         doSoftConstraint = 0; % no need for soft constraints since it is enforced as hard linear constraint
@@ -226,11 +252,18 @@ switch metaSolver
         x0 = rand(nVars,1);
         x0 = x0./sum(x0); % normalize to make sure the starting point is feasible
         [x, fval, exitflag] = fmincon(fh, x0, [], [], ones(1,nVars), 1, lb, ub, [], options);
+        
+    case 'custom'
+        %% user-specified weighting
+        x = [0.8 0.1 0.1]; % for G skill (5)
+        
 end
 
-% output of this section is the weight between the position and shape costs
+%%
+%--------------------------------
+% Generate and plot reproductions
+%--------------------------------
 
-%% Generate and plot reproductions
 w = x;     % weight
 
 nbViaPoints = length(viaPointsTime);
@@ -355,7 +388,10 @@ end
 disp('Weights: ')
 disp(w)
 
-%% save results
+%% 
+%--------------------------------
+% Save the results
+%--------------------------------
 
 % ask user if they would like to save the results 
 doSaveResults = input('Would you like a save these results: y or n?','s');
@@ -364,7 +400,7 @@ switch doSaveResults
     case 'y'
         disp('Saving the trained models and the figure...')
         filenamesaved = [saveFolderName '\' demoFolderName '\' erase(skills{demoFileIndex},".mat") '_trained'];
-        save([filenamesaved '.mat'],'M','Demos','Gmms','Sols','w','scalingFactors');
+        save([filenamesaved '.mat'],'M','Demos','Sols','w','scalingFactors');
         saveas(gcf,[filenamesaved '.fig'])
         saveas(gcf,[filenamesaved '.png'])
     case 'n'

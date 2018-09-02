@@ -51,12 +51,13 @@ for i = 1:nbViaPoints
     P_index = P_index + 1;
 end
 
-%% position-only coordinate
-
-w = [0 0 1];
+%% Generate reproductions
 
 demos{1} = cell(1,nbDemos);
-% get the initial point form another demo
+demos{2} = cell(1,nbDemos);
+demos{3} = cell(1,nbDemos);
+demos{4} = cell(1,nbDemos);
+demos{5} = cell(1,nbDemos);
 
 for ni = 1:nbDemos
     % define the constraint
@@ -72,7 +73,8 @@ for ni = 1:nbDemos
         end
     end
     
-    % CVX
+    % position-only coordinate
+    w = [0 0 1];
     
     if nbDims == 2
         cvx_begin quiet
@@ -105,31 +107,10 @@ for ni = 1:nbDemos
     end
     
     demos{1}{1,ni} = sol;
-end
-clear sol;
-
-%% tangent coordinate
-
-w = [0 1 0];
-
-demos{2} = cell(1,nbDemos);
-% get the initial point form another demo
-
-for ni = 1:nbDemos
-    % define the constraint
-    posConstraints = [(Demos{ni}(:,1)+0*rand(nbDims,1)).' ; (Demos{ni}(:,end)+0*rand(nbDims,1)).']*fixedWeight;
+    clear sol;
     
-    if ~isempty(viaPoints) % hard coded via points enforced independent of demonstrations
-        posConstraints = [posConstraints; viaPoints.'.*fixedWeight];
-    else
-        if ~isempty(viaPointsTime)
-            for i = 1:nbViaPoints
-                posConstraints = [posConstraints; Demos{ni}(:,viaPointsTime(i)).'*fixedWeight];
-            end
-        end
-    end
-    
-    % CVX
+    % tangent-only coordinate
+    w = [0 1 0];
     
     if nbDims == 2
         cvx_begin quiet
@@ -162,31 +143,10 @@ for ni = 1:nbDemos
     end
     
     demos{2}{1,ni} = sol;
-end
-clear sol;
-
-%% laplace coordinate
-
-w = [1 0 0];
-
-demos{3} = cell(1,nbDemos);
-% get the initial point form another demo
-
-for ni = 1:nbDemos
-    % define the constraint
-    posConstraints = [(Demos{ni}(:,1)+0*rand(nbDims,1)).' ; (Demos{ni}(:,end)+0*rand(nbDims,1)).']*fixedWeight;
+    clear sol;
     
-    if ~isempty(viaPoints) % hard coded via points enforced independent of demonstrations
-        posConstraints = [posConstraints; viaPoints.'.*fixedWeight];
-    else
-        if ~isempty(viaPointsTime)
-            for i = 1:nbViaPoints
-                posConstraints = [posConstraints; Demos{ni}(:,viaPointsTime(i)).'*fixedWeight];
-            end
-        end
-    end
-    
-    % CVX
+    % laplace-only coordinate
+    w = [1 0 0];
     
     if nbDims == 2
         cvx_begin quiet
@@ -219,31 +179,10 @@ for ni = 1:nbDemos
     end
     
     demos{3}{1,ni} = sol;
-end
-clear sol;
-
-%% uniform weighting
-
-w = [0.33 0.33 0.34];
-
-demos{4} = cell(1,nbDemos);
-% get the initial point form another demo
-
-for ni = 1:nbDemos
-    % define the constraint
-    posConstraints = [(Demos{ni}(:,1)+0*rand(nbDims,1)).' ; (Demos{ni}(:,end)+0*rand(nbDims,1)).']*fixedWeight;
+    clear sol;
     
-    if ~isempty(viaPoints) % hard coded via points enforced independent of demonstrations
-        posConstraints = [posConstraints; viaPoints.'.*fixedWeight];
-    else
-        if ~isempty(viaPointsTime)
-            for i = 1:nbViaPoints
-                posConstraints = [posConstraints; Demos{ni}(:,viaPointsTime(i)).'*fixedWeight];
-            end
-        end
-    end
-    
-    % CVX
+    % uniform weighting
+    w = [0.33 0.33 0.33];
     
     if nbDims == 2
         cvx_begin quiet
@@ -276,22 +215,22 @@ for ni = 1:nbDemos
     end
     
     demos{4}{1,ni} = sol;
+    clear sol;
 end
-clear sol;
 
-%% optimal weighting
+%% optimal weighting (ours)
 
 dataObj = load(resultsFile);
 demos{5} = dataObj.Demos;
 repros{5} = dataObj.Sols;
 
-%% evaluate reproductions
+%% evaluate the reproductions
 
 evaluationResults{1}.algoName = 'position-only';
 evaluationResults{2}.algoName = 'tangent-only';
 evaluationResults{3}.algoName = 'laplace-only';
 evaluationResults{4}.algoName = 'uniform weighting';
-evaluationResults{5}.algoName = 'optimal weighting';
+evaluationResults{5}.algoName = 'optimal weighting (ours)';
 
 for i = 1:5
     evaluationResults{i}.performanceMeasures = evaluate_reproductions(demos{i},repros{i});
