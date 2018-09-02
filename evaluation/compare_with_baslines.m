@@ -1,10 +1,15 @@
-function evaluationResults = compare_with_baslines(M, resultsFile)
+function [evaluationResults, repros] = compare_with_baslines(resultsFile,doPlot)
 %COMPARE_WITH_BASLINES compares automated cost balancing algorithm with
 %
 %   four baselines: (1) position-coordinate only; (2) tangent
 %   coordinate only; (3) laplacian-coordinate only; (4) uniform weighting
 %   of all three coordinates
 %   
+
+%% Load results
+dataObj = load(resultsFile);
+M = dataObj.M;
+demos = dataObj.Demos;
 
 %% Unpack M
 
@@ -53,11 +58,11 @@ end
 
 %% Generate reproductions
 
-demos{1} = cell(1,nbDemos);
-demos{2} = cell(1,nbDemos);
-demos{3} = cell(1,nbDemos);
-demos{4} = cell(1,nbDemos);
-demos{5} = cell(1,nbDemos);
+repros{1} = cell(1,nbDemos);
+repros{2} = cell(1,nbDemos);
+repros{3} = cell(1,nbDemos);
+repros{4} = cell(1,nbDemos);
+repros{5} = cell(1,nbDemos);
 
 for ni = 1:nbDemos
     % define the constraint
@@ -106,7 +111,7 @@ for ni = 1:nbDemos
         end
     end
     
-    demos{1}{1,ni} = sol;
+    repros{1}{1,ni} = sol.';
     clear sol;
     
     % tangent-only coordinate
@@ -142,7 +147,7 @@ for ni = 1:nbDemos
         end
     end
     
-    demos{2}{1,ni} = sol;
+    repros{2}{1,ni} = sol.';
     clear sol;
     
     % laplace-only coordinate
@@ -178,11 +183,11 @@ for ni = 1:nbDemos
         end
     end
     
-    demos{3}{1,ni} = sol;
+    repros{3}{1,ni} = sol.';
     clear sol;
     
     % uniform weighting
-    w = [0.33 0.33 0.33];
+    w = [0.33 0.33 0.34];
     
     if nbDims == 2
         cvx_begin quiet
@@ -214,14 +219,12 @@ for ni = 1:nbDemos
         end
     end
     
-    demos{4}{1,ni} = sol;
+    repros{4}{1,ni} = sol.';
     clear sol;
 end
 
 %% optimal weighting (ours)
 
-dataObj = load(resultsFile);
-demos{5} = dataObj.Demos;
 repros{5} = dataObj.Sols;
 
 %% evaluate the reproductions
@@ -233,6 +236,20 @@ evaluationResults{4}.algoName = 'uniform weighting';
 evaluationResults{5}.algoName = 'optimal weighting (ours)';
 
 for i = 1:5
-    evaluationResults{i}.performanceMeasures = evaluate_reproductions(demos{i},repros{i});
+    evaluationResults{i}.performanceMeasures = evaluate_reproductions(demos,repros{i});
+    if doPlot
+        figure(1)
+        plot(evaluationResults{i}.performanceMeasures.SEA.list,'lineWidth',2)
+        legend(evaluationResults{1}.algoName,evaluationResults{2}.algoName,evaluationResults{3}.algoName,evaluationResults{4}.algoName,evaluationResults{5}.algoName)
+        hold on
+        figure(2)
+        plot(evaluationResults{i}.performanceMeasures.SSE.list,'lineWidth',2)
+        legend(evaluationResults{1}.algoName,evaluationResults{2}.algoName,evaluationResults{3}.algoName,evaluationResults{4}.algoName,evaluationResults{5}.algoName)
+        hold on
+        figure(3)
+        plot(evaluationResults{i}.performanceMeasures.DTWD.list,'LineWidth',2)
+        legend(evaluationResults{1}.algoName,evaluationResults{2}.algoName,evaluationResults{3}.algoName,evaluationResults{4}.algoName,evaluationResults{5}.algoName)
+        hold on
+    end
 end
 

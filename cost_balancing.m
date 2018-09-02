@@ -38,7 +38,7 @@ nbStatesGrad = 5; % number of Gaussian Components (for gradient)
 nbStatesDelta = 5; % number of Gaussian Components (for laplacian)
 demoFolderName = 'LASA_dataset'; % folder name containing demos
 saveFolderName = 'results'; % folder to which to save the results
-demoFileIndex = 5; % skill number (index of the file in an alphabetically arranged list of all files in folderName)
+demoFileIndex = 10; % skill number (index of the file in an alphabetically arranged list of all files in folderName)
 ext = 'mat'; % extension of the demos
 
 %%
