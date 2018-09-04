@@ -293,9 +293,15 @@ figure('units','normalized','outerposition',[0 0 1 1]); hold on;
 title('Automated Cost Balancing');
 
 if nbDims == 2
-    plot(Mu_x(1,:),Mu_x(2,:),'--r','linewidth',2)
+    plot(Mu_x(1,:),Mu_x(2,:),'--r','linewidth',2);
+    for ii=1:nbDemos
+        plot(Demos{ii}(1,:),Demos{ii}(2,:),'color',[0.5 0.5 0.5]);
+    end
 else
-    plot3(Mu_x(1,:),Mu_x(2,:),Mu_x(3,:),'--r','linewidth',2)
+    plot3(Mu_x(1,:),Mu_x(2,:),Mu_x(3,:),'--r','linewidth',2);
+    for ii=1:nbDemos
+        plot3(Demos{ii}(1,:),Demos{ii}(2,:),Demos{ii}(3,:),'color',[0.5 0.5 0.5]);
+    end
 end
 
 whichDemos = 1:min(nbDemos,10);
@@ -331,9 +337,6 @@ for ni = 1:length(whichDemos)
         
         % plot
 %         subplot(1,length(whichDemos),ni);hold on
-        for ii=1:nbDemos
-            plot(Demos{ii}(1,:),Demos{ii}(2,:),'color',[0.5 0.5 0.5]);
-        end
         plot(sol(:,1),sol(:,2),'b','linewidth',2)
 %         plot(Mu_x(1,:),Mu_x(2,:),'--r','linewidth',2)
         bound_x = abs(max(sol_x) - min(sol_x))*0.1;
@@ -363,9 +366,6 @@ for ni = 1:length(whichDemos)
 
             % plot
 %             subplot(1,length(whichDemos),ni);hold on
-            for ii=1:nbDemos
-                plot3(Demos{ii}(1,:),Demos{ii}(2,:),Demos{ii}(3,:),'color',[0.5 0.5 0.5]);
-            end
             plot3(sol(:,1),sol(:,2),sol(:,3),'b','linewidth',2)
 %             plot3(Mu_x(1,:),Mu_x(2,:),Mu_x(3,:),'--r','linewidth',2)
             axis('auto');
@@ -377,7 +377,6 @@ for ni = 1:length(whichDemos)
             zlabel('x_3','fontname','Times','fontsize',14);
             ylabel('x_2','fontname','Times','fontsize',14);
             xlabel('x_1','fontname','Times','fontsize',14);
-            axis auto;
         else
             error("The current version of the software can only handle 2 and 3 dimensional spaces!")
         end

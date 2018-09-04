@@ -26,7 +26,6 @@ R_Sigma_d = M.R_Sigma_d;
 R_Sigma_g = M.R_Sigma_g;
 R_Sigma_x = M.R_Sigma_x;
 Demos = M.Demos;
-scalingFactors = M.scalingFactors; 
 viaPoints = M.viaPoints;
 viaPointsTime = M.viaPointsTime;
 doConstraintIntialPoint = M.doConstraintIntialPoint;
@@ -80,6 +79,7 @@ for ni = 1:nbDemos
     
     % position-only coordinate
     w = [0 0 1];
+    scalingFactors = ones(size(w));
     
     if nbDims == 2
         cvx_begin quiet
@@ -116,6 +116,7 @@ for ni = 1:nbDemos
     
     % tangent-only coordinate
     w = [0 1 0];
+    scalingFactors = ones(size(w));
     
     if nbDims == 2
         cvx_begin quiet
@@ -152,6 +153,7 @@ for ni = 1:nbDemos
     
     % laplace-only coordinate
     w = [1 0 0];
+    scalingFactors = ones(size(w));
     
     if nbDims == 2
         cvx_begin quiet
@@ -188,6 +190,7 @@ for ni = 1:nbDemos
     
     % uniform weighting
     w = [0.33 0.33 0.34];
+    scalingFactors = ones(size(w));
     
     if nbDims == 2
         cvx_begin quiet
@@ -225,6 +228,9 @@ end
 
 %% optimal weighting (ours)
 
+% w = dataObj.w;
+% scalingFactors = M.scalingFactors; 
+
 repros{5} = dataObj.Sols;
 
 %% evaluate the reproductions
@@ -239,14 +245,19 @@ for i = 1:5
     evaluationResults{i}.performanceMeasures = evaluate_reproductions(demos,repros{i});
     if doPlot
         figure(1)
+        title('Swept Error Area') 
         plot(evaluationResults{i}.performanceMeasures.SEA.list,'lineWidth',2)
         legend(evaluationResults{1}.algoName,evaluationResults{2}.algoName,evaluationResults{3}.algoName,evaluationResults{4}.algoName,evaluationResults{5}.algoName)
         hold on
+        
         figure(2)
+        title('Sum of Squared Errors')
         plot(evaluationResults{i}.performanceMeasures.SSE.list,'lineWidth',2)
         legend(evaluationResults{1}.algoName,evaluationResults{2}.algoName,evaluationResults{3}.algoName,evaluationResults{4}.algoName,evaluationResults{5}.algoName)
         hold on
+        
         figure(3)
+        title('Dynamic Time Warping Distance')
         plot(evaluationResults{i}.performanceMeasures.DTWD.list,'LineWidth',2)
         legend(evaluationResults{1}.algoName,evaluationResults{2}.algoName,evaluationResults{3}.algoName,evaluationResults{4}.algoName,evaluationResults{5}.algoName)
         hold on
