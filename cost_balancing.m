@@ -38,7 +38,7 @@ nbStatesGrad = 5; % number of Gaussian Components (for gradient)
 nbStatesDelta = 5; % number of Gaussian Components (for laplacian)
 demoFolderName = 'LASA_dataset'; % folder name containing demos
 saveFolderName = 'results'; % folder to which to save the results
-demoFileIndex = 10; % skill number (index of the file in an alphabetically arranged list of all files in folderName)
+demoFileIndex = 25; % skill number (index of the file in an alphabetically arranged list of all files in folderName)
 ext = 'mat'; % extension of the demos
 
 %%
@@ -403,6 +403,7 @@ switch doSaveResults
         save([filenamesaved '.mat'],'M','Demos','Sols','w','scalingFactors');
         saveas(gcf,[filenamesaved '.fig'])
         saveas(gcf,[filenamesaved '.png'])
+        saveas(gcf,[filenamesaved '.eps'])
     case 'n'
         disp('The results were NOT saved!');
     otherwise
