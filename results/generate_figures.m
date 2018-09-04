@@ -49,7 +49,18 @@ RAIL_picking_obj = load('C:\Harish\Code\SkillLearning-using-Optimization\results
 % plot results
 figure('Name','RAIL picking Datset','units','normalized','outerposition',[0 0 1 1]);
 
-subplot(1,2,1);
+subplot(1,3,1);
+boxplot(RAIL_picking_obj.HD_list,'symbol','')
+set(findobj(gca,'type','line'),'linew',2)
+hold on
+plot(mean(RAIL_picking_obj.HD_list),'p','color',[0 0.5 0],'LineWidth',3,'MarkerSize',10)
+set(gca,'FontSize',25)
+% ylabel('Sum of Squared Distances (m^2)')
+title('Hausdorff Distance','FontSize',20)
+xticklabels({'Position','Tangent','Laplace','Uniform','Learned'})
+xtickangle(45)
+
+subplot(1,3,2);
 boxplot(RAIL_picking_obj.SSE_list,'symbol','')
 set(findobj(gca,'type','line'),'linew',2)
 hold on
@@ -60,7 +71,7 @@ title('Sum of Squared Distances (m^2)','FontSize',20)
 xticklabels({'Position','Tangent','Laplace','Uniform','Learned'})
 xtickangle(45)
 
-subplot(1,2,2);
+subplot(1,3,3);
 boxplot(RAIL_picking_obj.DTWD_list,'symbol','')
 set(findobj(gca,'type','line'),'linew',2)
 hold on
@@ -78,7 +89,18 @@ RAIL_pressing_obj = load('C:\Harish\Code\SkillLearning-using-Optimization\result
 % plot results
 figure('Name','RAIL Pressing Datset','units','normalized','outerposition',[0 0 1 1]);
 
-subplot(1,2,1);
+subplot(1,3,1);
+boxplot(RAIL_pressing_obj.HD_list,'symbol','')
+set(findobj(gca,'type','line'),'linew',2)
+hold on
+plot(mean(RAIL_pressing_obj.HD_list),'p','color',[0 0.5 0],'LineWidth',3,'MarkerSize',10)
+set(gca,'FontSize',25)
+% ylabel('Sum of Squared Distances (m^2)')
+title('Hausdorff Distance','FontSize',20)
+xticklabels({'Position','Tangent','Laplace','Uniform','Learned'})
+xtickangle(45)
+
+subplot(1,3,2);
 boxplot(RAIL_pressing_obj.SSE_list,'symbol','')
 set(findobj(gca,'type','line'),'linew',2)
 hold on
@@ -89,7 +111,7 @@ title('Sum of Squared Distances (m^2)','FontSize',20)
 xticklabels({'Position','Tangent','Laplace','Uniform','Learned'})
 xtickangle(45)
 
-subplot(1,2,2);
+subplot(1,3,3);
 boxplot(RAIL_pressing_obj.DTWD_list,'symbol','')
 set(findobj(gca,'type','line'),'linew',2)
 hold on
@@ -107,7 +129,18 @@ RAIL_pushing_obj = load('C:\Harish\Code\SkillLearning-using-Optimization\results
 % plot results
 figure('Name','RAIL Pushing Datset','units','normalized','outerposition',[0 0 1 1]);
 
-subplot(1,2,1);
+subplot(1,3,1);
+boxplot(RAIL_pushing_obj.HD_list,'symbol','')
+set(findobj(gca,'type','line'),'linew',2)
+hold on
+plot(mean(RAIL_pushing_obj.HD_list),'p','color',[0 0.5 0],'LineWidth',3,'MarkerSize',10)
+set(gca,'FontSize',25)
+% ylabel('Sum of Squared Distances (m^2)')
+title('Hausdorff Distance','FontSize',20)
+xticklabels({'Position','Tangent','Laplace','Uniform','Learned'})
+xtickangle(45)
+
+subplot(1,3,2);
 boxplot(RAIL_pushing_obj.SSE_list,'symbol','')
 set(findobj(gca,'type','line'),'linew',2)
 hold on
@@ -118,7 +151,7 @@ title('Sum of Squared Distances (m^2)','FontSize',20)
 xticklabels({'Position','Tangent','Laplace','Uniform','Learned'})
 xtickangle(45)
 
-subplot(1,2,2);
+subplot(1,3,3);
 boxplot(RAIL_pushing_obj.DTWD_list,'symbol','')
 set(findobj(gca,'type','line'),'linew',2)
 hold on

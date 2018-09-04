@@ -189,7 +189,7 @@ for ni = 1:nbDemos
     clear sol;
     
     % uniform weighting
-    w = [0.33 0.33 0.34];
+    w = [1/3 1/3 1/3];
     scalingFactors = ones(size(w));
     
     if nbDims == 2
@@ -259,6 +259,12 @@ for i = 1:5
         figure(3)
         title('Dynamic Time Warping Distance')
         plot(evaluationResults{i}.performanceMeasures.DTWD.list,'LineWidth',2)
+        legend(evaluationResults{1}.algoName,evaluationResults{2}.algoName,evaluationResults{3}.algoName,evaluationResults{4}.algoName,evaluationResults{5}.algoName)
+        hold on
+        
+        figure(4)
+        title('Hausdorff Distance')
+        plot(evaluationResults{i}.performanceMeasures.HD.list,'LineWidth',2)
         legend(evaluationResults{1}.algoName,evaluationResults{2}.algoName,evaluationResults{3}.algoName,evaluationResults{4}.algoName,evaluationResults{5}.algoName)
         hold on
     end
