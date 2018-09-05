@@ -239,7 +239,7 @@ evaluationResults{1}.algoName = 'position-only';
 evaluationResults{2}.algoName = 'tangent-only';
 evaluationResults{3}.algoName = 'laplace-only';
 evaluationResults{4}.algoName = 'uniform weighting';
-evaluationResults{5}.algoName = 'optimal weighting (ours)';
+evaluationResults{5}.algoName = 'optimal weighting';
 
 for i = 1:5
     evaluationResults{i}.performanceMeasures = evaluate_reproductions(demos,repros{i});
@@ -265,6 +265,12 @@ for i = 1:5
         figure(4)
         title('Hausdorff Distance')
         plot(evaluationResults{i}.performanceMeasures.HD.list,'LineWidth',2)
+        legend(evaluationResults{1}.algoName,evaluationResults{2}.algoName,evaluationResults{3}.algoName,evaluationResults{4}.algoName,evaluationResults{5}.algoName)
+        hold on
+        
+        figure(5)
+        title('Frechet Distance')
+        plot(evaluationResults{i}.performanceMeasures.FD.list,'LineWidth',2)
         legend(evaluationResults{1}.algoName,evaluationResults{2}.algoName,evaluationResults{3}.algoName,evaluationResults{4}.algoName,evaluationResults{5}.algoName)
         hold on
     end

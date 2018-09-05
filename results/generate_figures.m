@@ -17,7 +17,7 @@ plot(mean(LASA_obj.SEA_list),'p','color',[0 0.5 0],'LineWidth',3,'MarkerSize',10
 set(gca,'FontSize',25)
 % ylabel('Swept Error Area (m^2)')
 title('Swept Error Area (m^2)','FontSize',20)
-xticklabels({'Position','Tangent','Laplace','Uniform','Learned'})
+xticklabels({'Cartesian','Tangent','Laplace','Uniform','Learned'})
 xtickangle(45)
 
 subplot(1,3,2);
@@ -28,7 +28,7 @@ plot(mean(LASA_obj.SSE_list),'p','color',[0 0.5 0],'LineWidth',3,'MarkerSize',10
 set(gca,'FontSize',25)
 % ylabel('Sum of Squared Distances (m^2)')
 title('Sum of Squared Distances (m^2)','FontSize',20)
-xticklabels({'Position','Tangent','Laplace','Uniform','Learned'})
+xticklabels({'Cartesian','Tangent','Laplace','Uniform','Learned'})
 xtickangle(45)
 
 subplot(1,3,3);
@@ -39,7 +39,7 @@ plot(mean(LASA_obj.DTWD_list),'p','color',[0 0.5 0],'LineWidth',3,'MarkerSize',1
 set(gca,'FontSize',25)
 % ylabel('Dynamic Time Warping Distance')
 title('Dynamic Time Warping Distance','FontSize',20)
-xticklabels({'Position','Tangent','Laplace','Uniform','Learned'})
+xticklabels({'Cartesian','Tangent','Laplace','Uniform','Learned'})
 xtickangle(45)
 
 %% Generate plots for RAIL picking datset
@@ -50,14 +50,14 @@ RAIL_picking_obj = load('C:\Harish\Code\SkillLearning-using-Optimization\results
 figure('Name','RAIL picking Datset','units','normalized','outerposition',[0 0 1 1]);
 
 subplot(1,3,1);
-boxplot(RAIL_picking_obj.HD_list,'symbol','')
+boxplot(RAIL_picking_obj.FD_list,'symbol','')
 set(findobj(gca,'type','line'),'linew',2)
 hold on
-plot(mean(RAIL_picking_obj.HD_list),'p','color',[0 0.5 0],'LineWidth',3,'MarkerSize',10)
+plot(mean(RAIL_picking_obj.FD_list),'p','color',[0 0.5 0],'LineWidth',3,'MarkerSize',10)
 set(gca,'FontSize',25)
 % ylabel('Sum of Squared Distances (m^2)')
-title('Hausdorff Distance','FontSize',20)
-xticklabels({'Position','Tangent','Laplace','Uniform','Learned'})
+title('Frechet Distance','FontSize',20)
+xticklabels({'Cartesian','Tangent','Laplace','Uniform','Learned'})
 xtickangle(45)
 
 subplot(1,3,2);
@@ -68,7 +68,7 @@ plot(mean(RAIL_picking_obj.SSE_list),'p','color',[0 0.5 0],'LineWidth',3,'Marker
 set(gca,'FontSize',25)
 % ylabel('Sum of Squared Distances (m^2)')
 title('Sum of Squared Distances (m^2)','FontSize',20)
-xticklabels({'Position','Tangent','Laplace','Uniform','Learned'})
+xticklabels({'Cartesian','Tangent','Laplace','Uniform','Learned'})
 xtickangle(45)
 
 subplot(1,3,3);
@@ -79,7 +79,7 @@ plot(mean(RAIL_picking_obj.DTWD_list),'p','color',[0 0.5 0],'LineWidth',3,'Marke
 set(gca,'FontSize',25)
 % ylabel('Dynamic Time Warping Distance')
 title('Dynamic Time Warping Distance','FontSize',20)
-xticklabels({'Position','Tangent','Laplace','Uniform','Learned'})
+xticklabels({'Cartesian','Tangent','Laplace','Uniform','Learned'})
 xtickangle(45)
 
 %% Generate plots for RAIL pressing datset
@@ -90,14 +90,14 @@ RAIL_pressing_obj = load('C:\Harish\Code\SkillLearning-using-Optimization\result
 figure('Name','RAIL Pressing Datset','units','normalized','outerposition',[0 0 1 1]);
 
 subplot(1,3,1);
-boxplot(RAIL_pressing_obj.HD_list,'symbol','')
+boxplot(RAIL_pressing_obj.FD_list,'symbol','')
 set(findobj(gca,'type','line'),'linew',2)
 hold on
-plot(mean(RAIL_pressing_obj.HD_list),'p','color',[0 0.5 0],'LineWidth',3,'MarkerSize',10)
+plot(mean(RAIL_pressing_obj.FD_list),'p','color',[0 0.5 0],'LineWidth',3,'MarkerSize',10)
 set(gca,'FontSize',25)
 % ylabel('Sum of Squared Distances (m^2)')
-title('Hausdorff Distance','FontSize',20)
-xticklabels({'Position','Tangent','Laplace','Uniform','Learned'})
+title('Frechet Distance','FontSize',20)
+xticklabels({'Cartesian','Tangent','Laplace','Uniform','Learned'})
 xtickangle(45)
 
 subplot(1,3,2);
@@ -108,7 +108,7 @@ plot(mean(RAIL_pressing_obj.SSE_list),'p','color',[0 0.5 0],'LineWidth',3,'Marke
 set(gca,'FontSize',25)
 % ylabel('Sum of Squared Distances (m^2)')
 title('Sum of Squared Distances (m^2)','FontSize',20)
-xticklabels({'Position','Tangent','Laplace','Uniform','Learned'})
+xticklabels({'Cartesian','Tangent','Laplace','Uniform','Learned'})
 xtickangle(45)
 
 subplot(1,3,3);
@@ -119,7 +119,7 @@ plot(mean(RAIL_pressing_obj.DTWD_list),'p','color',[0 0.5 0],'LineWidth',3,'Mark
 set(gca,'FontSize',25)
 % ylabel('Dynamic Time Warping Distance')
 title('Dynamic Time Warping Distance','FontSize',20)
-xticklabels({'Position','Tangent','Laplace','Uniform','Learned'})
+xticklabels({'Cartesian','Tangent','Laplace','Uniform','Learned'})
 xtickangle(45)
 
 %% Generate plots for RAIL pushing datset
@@ -130,14 +130,14 @@ RAIL_pushing_obj = load('C:\Harish\Code\SkillLearning-using-Optimization\results
 figure('Name','RAIL Pushing Datset','units','normalized','outerposition',[0 0 1 1]);
 
 subplot(1,3,1);
-boxplot(RAIL_pushing_obj.HD_list,'symbol','')
+boxplot(RAIL_pushing_obj.FD_list,'symbol','')
 set(findobj(gca,'type','line'),'linew',2)
 hold on
-plot(mean(RAIL_pushing_obj.HD_list),'p','color',[0 0.5 0],'LineWidth',3,'MarkerSize',10)
+plot(mean(RAIL_pushing_obj.FD_list),'p','color',[0 0.5 0],'LineWidth',3,'MarkerSize',10)
 set(gca,'FontSize',25)
 % ylabel('Sum of Squared Distances (m^2)')
-title('Hausdorff Distance','FontSize',20)
-xticklabels({'Position','Tangent','Laplace','Uniform','Learned'})
+title('Frechet Distance','FontSize',20)
+xticklabels({'Cartesian','Tangent','Laplace','Uniform','Learned'})
 xtickangle(45)
 
 subplot(1,3,2);
@@ -148,7 +148,7 @@ plot(mean(RAIL_pushing_obj.SSE_list),'p','color',[0 0.5 0],'LineWidth',3,'Marker
 set(gca,'FontSize',25)
 % ylabel('Sum of Squared Distances (m^2)')
 title('Sum of Squared Distances (m^2)','FontSize',20)
-xticklabels({'Position','Tangent','Laplace','Uniform','Learned'})
+xticklabels({'Cartesian','Tangent','Laplace','Uniform','Learned'})
 xtickangle(45)
 
 subplot(1,3,3);
@@ -159,5 +159,5 @@ plot(mean(RAIL_pushing_obj.DTWD_list),'p','color',[0 0.5 0],'LineWidth',3,'Marke
 set(gca,'FontSize',25)
 % ylabel('Dynamic Time Warping Distance')
 title('Dynamic Time Warping Distance','FontSize',20)
-xticklabels({'Position','Tangent','Laplace','Uniform','Learned'})
+xticklabels({'Cartesian','Tangent','Laplace','Uniform','Learned'})
 xtickangle(45)
