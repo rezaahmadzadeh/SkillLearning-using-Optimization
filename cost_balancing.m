@@ -342,6 +342,7 @@ for ni = 1:length(whichDemos)
         bound_x = abs(max(sol_x) - min(sol_x))*0.1;
         bound_y = abs(max(sol_y) - min(sol_y))*0.1;
         axis([min(sol(:,1))-bound_x max(sol(:,1))+bound_x min(sol(:,2))-bound_y max(sol(:,2))+bound_y]);
+        axis('square');
         xticklabels([]);
         yticklabels([]);
         box on; grid on;
