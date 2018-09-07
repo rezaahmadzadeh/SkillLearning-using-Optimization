@@ -3,6 +3,9 @@
 % for each evailable dataset, illustrating statistical performance of each
 % algorithm used in comparison
 
+%% Design
+linecolors = summer(5); % box color scheme
+
 %% Generate plots for LASA dataset
 % load aggregate results
 LASA_obj = load('C:\Harish\Code\SkillLearning-using-Optimization\results\LASA_dataset\aggregate_results\LASA_aggregate_evaluation.mat');
@@ -10,10 +13,16 @@ LASA_obj = load('C:\Harish\Code\SkillLearning-using-Optimization\results\LASA_da
 % plot results
 figure('Name','LASA Datset','units','normalized','outerposition',[0 0 1 1]);
 subplot(1,3,1);
-boxplot(LASA_obj.SEA_list,'symbol','')
+boxplot(LASA_obj.SEA_list,'symbol','') % do not plot outliers
 set(findobj(gca,'type','line'),'linew',2)
 hold on
-plot(mean(LASA_obj.SEA_list),'p','color',[0 0.5 0],'LineWidth',3,'MarkerSize',10)
+h = findobj(gca,'Tag','Box');
+for j=1:length(h)
+ h(j).Color = zeros(1,3); % black borders   
+ p_obj(j) = patch(get(h(j),'XData'),get(h(j),'YData'),'y','FaceColor',linecolors(j,:),'FaceAlpha',1); % fill the boxes
+ p_obj(j).ZData = -ones(size(get(h(j),'XData'))); % send boxes to the back
+end
+plot(mean(LASA_obj.SEA_list),'p','color',[0.6 0.2 0],'LineWidth',2,'MarkerSize',6)
 set(gca,'FontSize',25)
 % ylabel('Swept Error Area (m^2)')
 title('Swept Error Area (m^2)','FontSize',20)
@@ -24,7 +33,13 @@ subplot(1,3,2);
 boxplot(LASA_obj.SSE_list,'symbol','')
 set(findobj(gca,'type','line'),'linew',2)
 hold on
-plot(mean(LASA_obj.SSE_list),'p','color',[0 0.5 0],'LineWidth',3,'MarkerSize',10)
+h = findobj(gca,'Tag','Box');
+for j=1:length(h)
+ h(j).Color = zeros(1,3); % black borders   
+ p_obj(j) = patch(get(h(j),'XData'),get(h(j),'YData'),'y','FaceColor',linecolors(j,:),'FaceAlpha',1); % fill the boxes
+ p_obj(j).ZData = -ones(size(get(h(j),'XData'))); % send boxes to the back
+end
+plot(mean(LASA_obj.SSE_list),'p','color',[0.6 0.2 0],'LineWidth',2,'MarkerSize',6)
 set(gca,'FontSize',25)
 % ylabel('Sum of Squared Distances (m^2)')
 title('Sum of Squared Distances (m^2)','FontSize',20)
@@ -35,7 +50,13 @@ subplot(1,3,3);
 boxplot(LASA_obj.DTWD_list,'symbol','')
 set(findobj(gca,'type','line'),'linew',2)
 hold on
-plot(mean(LASA_obj.DTWD_list),'p','color',[0 0.5 0],'LineWidth',3,'MarkerSize',10)
+h = findobj(gca,'Tag','Box');
+for j=1:length(h)
+ h(j).Color = zeros(1,3); % black borders   
+ p_obj(j) = patch(get(h(j),'XData'),get(h(j),'YData'),'y','FaceColor',linecolors(j,:),'FaceAlpha',1); % fill the boxes
+ p_obj(j).ZData = -ones(size(get(h(j),'XData'))); % send boxes to the back
+end
+plot(mean(LASA_obj.DTWD_list),'p','color',[0.6 0.2 0],'LineWidth',2,'MarkerSize',6)
 set(gca,'FontSize',25)
 % ylabel('Dynamic Time Warping Distance')
 title('Dynamic Time Warping Distance','FontSize',20)
@@ -53,7 +74,13 @@ subplot(1,3,1);
 boxplot(RAIL_picking_obj.FD_list,'symbol','')
 set(findobj(gca,'type','line'),'linew',2)
 hold on
-plot(mean(RAIL_picking_obj.FD_list),'p','color',[0 0.5 0],'LineWidth',3,'MarkerSize',10)
+h = findobj(gca,'Tag','Box');
+for j=1:length(h)
+ h(j).Color = zeros(1,3); % black borders   
+ p_obj(j) = patch(get(h(j),'XData'),get(h(j),'YData'),'y','FaceColor',linecolors(j,:),'FaceAlpha',1); % fill the boxes
+ p_obj(j).ZData = -ones(size(get(h(j),'XData'))); % send boxes to the back
+end
+plot(mean(RAIL_picking_obj.FD_list),'p','color',[0.6 0.2 0],'LineWidth',2,'MarkerSize',6)
 set(gca,'FontSize',25)
 % ylabel('Sum of Squared Distances (m^2)')
 title('Frechet Distance','FontSize',20)
@@ -64,7 +91,19 @@ subplot(1,3,2);
 boxplot(RAIL_picking_obj.SSE_list,'symbol','')
 set(findobj(gca,'type','line'),'linew',2)
 hold on
-plot(mean(RAIL_picking_obj.SSE_list),'p','color',[0 0.5 0],'LineWidth',3,'MarkerSize',10)
+h = findobj(gca,'Tag','Box');
+for j=1:length(h)
+ h(j).Color = zeros(1,3); % black borders   
+ p_obj(j) = patch(get(h(j),'XData'),get(h(j),'YData'),'y','FaceColor',linecolors(j,:),'FaceAlpha',1); % fill the boxes
+ p_obj(j).ZData = -ones(size(get(h(j),'XData'))); % send boxes to the back
+end
+h = findobj(gca,'Tag','Box');
+for j=1:length(h)
+ h(j).Color = zeros(1,3); % black borders   
+ p_obj(j) = patch(get(h(j),'XData'),get(h(j),'YData'),'y','FaceColor',linecolors(j,:),'FaceAlpha',1); % fill the boxes
+ p_obj(j).ZData = -ones(size(get(h(j),'XData'))); % send boxes to the back
+end
+plot(mean(RAIL_picking_obj.SSE_list),'p','color',[0.6 0.2 0],'LineWidth',2,'MarkerSize',6)
 set(gca,'FontSize',25)
 % ylabel('Sum of Squared Distances (m^2)')
 title('Sum of Squared Distances (m^2)','FontSize',20)
@@ -75,7 +114,13 @@ subplot(1,3,3);
 boxplot(RAIL_picking_obj.DTWD_list,'symbol','')
 set(findobj(gca,'type','line'),'linew',2)
 hold on
-plot(mean(RAIL_picking_obj.DTWD_list),'p','color',[0 0.5 0],'LineWidth',3,'MarkerSize',10)
+h = findobj(gca,'Tag','Box');
+for j=1:length(h)
+ h(j).Color = zeros(1,3); % black borders   
+ p_obj(j) = patch(get(h(j),'XData'),get(h(j),'YData'),'y','FaceColor',linecolors(j,:),'FaceAlpha',1); % fill the boxes
+ p_obj(j).ZData = -ones(size(get(h(j),'XData'))); % send boxes to the back
+end
+plot(mean(RAIL_picking_obj.DTWD_list),'p','color',[0.6 0.2 0],'LineWidth',2,'MarkerSize',6)
 set(gca,'FontSize',25)
 % ylabel('Dynamic Time Warping Distance')
 title('Dynamic Time Warping Distance','FontSize',20)
@@ -93,7 +138,13 @@ subplot(1,3,1);
 boxplot(RAIL_pressing_obj.FD_list,'symbol','')
 set(findobj(gca,'type','line'),'linew',2)
 hold on
-plot(mean(RAIL_pressing_obj.FD_list),'p','color',[0 0.5 0],'LineWidth',3,'MarkerSize',10)
+h = findobj(gca,'Tag','Box');
+for j=1:length(h)
+ h(j).Color = zeros(1,3); % black borders   
+ p_obj(j) = patch(get(h(j),'XData'),get(h(j),'YData'),'y','FaceColor',linecolors(j,:),'FaceAlpha',1); % fill the boxes
+ p_obj(j).ZData = -ones(size(get(h(j),'XData'))); % send boxes to the back
+end
+plot(mean(RAIL_pressing_obj.FD_list),'p','color',[0.6 0.2 0],'LineWidth',2,'MarkerSize',6)
 set(gca,'FontSize',25)
 % ylabel('Sum of Squared Distances (m^2)')
 title('Frechet Distance','FontSize',20)
@@ -104,7 +155,13 @@ subplot(1,3,2);
 boxplot(RAIL_pressing_obj.SSE_list,'symbol','')
 set(findobj(gca,'type','line'),'linew',2)
 hold on
-plot(mean(RAIL_pressing_obj.SSE_list),'p','color',[0 0.5 0],'LineWidth',3,'MarkerSize',10)
+h = findobj(gca,'Tag','Box');
+for j=1:length(h)
+ h(j).Color = zeros(1,3); % black borders   
+ p_obj(j) = patch(get(h(j),'XData'),get(h(j),'YData'),'y','FaceColor',linecolors(j,:),'FaceAlpha',1); % fill the boxes
+ p_obj(j).ZData = -ones(size(get(h(j),'XData'))); % send boxes to the back
+end
+plot(mean(RAIL_pressing_obj.SSE_list),'p','color',[0.6 0.2 0],'LineWidth',2,'MarkerSize',6)
 set(gca,'FontSize',25)
 % ylabel('Sum of Squared Distances (m^2)')
 title('Sum of Squared Distances (m^2)','FontSize',20)
@@ -115,7 +172,13 @@ subplot(1,3,3);
 boxplot(RAIL_pressing_obj.DTWD_list,'symbol','')
 set(findobj(gca,'type','line'),'linew',2)
 hold on
-plot(mean(RAIL_pressing_obj.DTWD_list),'p','color',[0 0.5 0],'LineWidth',3,'MarkerSize',10)
+h = findobj(gca,'Tag','Box');
+for j=1:length(h)
+ h(j).Color = zeros(1,3); % black borders   
+ p_obj(j) = patch(get(h(j),'XData'),get(h(j),'YData'),'y','FaceColor',linecolors(j,:),'FaceAlpha',1); % fill the boxes
+ p_obj(j).ZData = -ones(size(get(h(j),'XData'))); % send boxes to the back
+end
+plot(mean(RAIL_pressing_obj.DTWD_list),'p','color',[0.6 0.2 0],'LineWidth',2,'MarkerSize',6)
 set(gca,'FontSize',25)
 % ylabel('Dynamic Time Warping Distance')
 title('Dynamic Time Warping Distance','FontSize',20)
@@ -133,7 +196,13 @@ subplot(1,3,1);
 boxplot(RAIL_pushing_obj.FD_list,'symbol','')
 set(findobj(gca,'type','line'),'linew',2)
 hold on
-plot(mean(RAIL_pushing_obj.FD_list),'p','color',[0 0.5 0],'LineWidth',3,'MarkerSize',10)
+h = findobj(gca,'Tag','Box');
+for j=1:length(h)
+ h(j).Color = zeros(1,3); % black borders   
+ p_obj(j) = patch(get(h(j),'XData'),get(h(j),'YData'),'y','FaceColor',linecolors(j,:),'FaceAlpha',1); % fill the boxes
+ p_obj(j).ZData = -ones(size(get(h(j),'XData'))); % send boxes to the back
+end
+plot(mean(RAIL_pushing_obj.FD_list),'p','color',[0.6 0.2 0],'LineWidth',2,'MarkerSize',6)
 set(gca,'FontSize',25)
 % ylabel('Sum of Squared Distances (m^2)')
 title('Frechet Distance','FontSize',20)
@@ -144,7 +213,13 @@ subplot(1,3,2);
 boxplot(RAIL_pushing_obj.SSE_list,'symbol','')
 set(findobj(gca,'type','line'),'linew',2)
 hold on
-plot(mean(RAIL_pushing_obj.SSE_list),'p','color',[0 0.5 0],'LineWidth',3,'MarkerSize',10)
+h = findobj(gca,'Tag','Box');
+for j=1:length(h)
+ h(j).Color = zeros(1,3); % black borders   
+ p_obj(j) = patch(get(h(j),'XData'),get(h(j),'YData'),'y','FaceColor',linecolors(j,:),'FaceAlpha',1); % fill the boxes
+ p_obj(j).ZData = -ones(size(get(h(j),'XData'))); % send boxes to the back
+end
+plot(mean(RAIL_pushing_obj.SSE_list),'p','color',[0.6 0.2 0],'LineWidth',2,'MarkerSize',6)
 set(gca,'FontSize',25)
 % ylabel('Sum of Squared Distances (m^2)')
 title('Sum of Squared Distances (m^2)','FontSize',20)
@@ -155,7 +230,13 @@ subplot(1,3,3);
 boxplot(RAIL_pushing_obj.DTWD_list,'symbol','')
 set(findobj(gca,'type','line'),'linew',2)
 hold on
-plot(mean(RAIL_pushing_obj.DTWD_list),'p','color',[0 0.5 0],'LineWidth',3,'MarkerSize',10)
+h = findobj(gca,'Tag','Box');
+for j=1:length(h)
+ h(j).Color = zeros(1,3); % black borders   
+ p_obj(j) = patch(get(h(j),'XData'),get(h(j),'YData'),'y','FaceColor',linecolors(j,:),'FaceAlpha',1); % fill the boxes
+ p_obj(j).ZData = -ones(size(get(h(j),'XData'))); % send boxes to the back
+end
+plot(mean(RAIL_pushing_obj.DTWD_list),'p','color',[0.6 0.2 0],'LineWidth',2,'MarkerSize',6)
 set(gca,'FontSize',25)
 % ylabel('Dynamic Time Warping Distance')
 title('Dynamic Time Warping Distance','FontSize',20)
