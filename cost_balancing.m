@@ -341,7 +341,8 @@ for ni = 1:length(whichDemos)
 %         plot(Mu_x(1,:),Mu_x(2,:),'--r','linewidth',2)
         bound_x = abs(max(sol_x) - min(sol_x))*0.1;
         bound_y = abs(max(sol_y) - min(sol_y))*0.1;
-        axis([min(sol(:,1))-bound_x max(sol(:,1))+bound_x min(sol(:,2))-bound_y max(sol(:,2))+bound_y]);
+%         axis([min(sol(:,1))-bound_x max(sol(:,1))+bound_x min(sol(:,2))-bound_y max(sol(:,2))+bound_y]);
+        axis('auto')
         axis('square');
         xticklabels([]);
         yticklabels([]);

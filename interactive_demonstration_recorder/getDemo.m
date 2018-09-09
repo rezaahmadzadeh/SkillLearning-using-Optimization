@@ -45,6 +45,8 @@ for ii=1:nDemo
     xs = smooth(Ds{ii}(:,1),span,'rloess');
     ys = smooth(Ds{ii}(:,2),span,'rloess');
     Dss{ii} = [xs ys];
+    demos{1,ii}.pos = Dss{1,ii}'; % LASA dataset format
+    demos{1,ii}.time = [dt:dt:size(Dss{1,ii},1)*dt];
 end
 
 gcf;hold off;clf
