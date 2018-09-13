@@ -1,6 +1,7 @@
 %compute aggregate stats for the LASA dataset
 
-LASAResultsFolderName = 'results\LASA_dataset';
+LASAResultsFolderName = 'results\LASA_dataset\trained_models';
+saveFolderName = 'results\LASA_dataset';
 ext = 'mat';
 doPlot = 0; 
 
@@ -8,16 +9,17 @@ doPlot = 0;
 
 LASA_stats = cell(1,5);
 
-LASA_stats{1}.algoName = 'position-only';
-LASA_stats{2}.algoName = 'tangent-only';
-LASA_stats{3}.algoName = 'laplace-only';
-LASA_stats{4}.algoName = 'uniform weighting';
-LASA_stats{5}.algoName = 'optimal weighting';
+LASA_stats{1}.algoName = 'Catesian';
+LASA_stats{2}.algoName = 'Tangent';
+LASA_stats{3}.algoName = 'Laplacian';
+LASA_stats{4}.algoName = 'uniform';
+LASA_stats{5}.algoName = 'Learned';
 
 for j = 1:5
     LASA_stats{j}.performanceMeasures.SEA.list = [];
     LASA_stats{j}.performanceMeasures.SSE.list = [];
     LASA_stats{j}.performanceMeasures.DTWD.list = [];
+    LASA_stats{j}.performanceMeasures.FD.list = [];
 
 end
 
@@ -30,6 +32,8 @@ for i = 1:nModels
         LASA_stats{j}.performanceMeasures.SEA.list = [LASA_stats{j}.performanceMeasures.SEA.list evaluationResults{j}.performanceMeasures.SEA.list];
         LASA_stats{j}.performanceMeasures.SSE.list = [LASA_stats{j}.performanceMeasures.SSE.list evaluationResults{j}.performanceMeasures.SSE.list];
         LASA_stats{j}.performanceMeasures.DTWD.list = [LASA_stats{j}.performanceMeasures.DTWD.list evaluationResults{j}.performanceMeasures.DTWD.list];
+        LASA_stats{j}.performanceMeasures.FD.list = [LASA_stats{j}.performanceMeasures.FD.list evaluationResults{j}.performanceMeasures.FD.list];
+
     end
     
     clear evaluationResults
@@ -42,6 +46,8 @@ for j = 1:5
     LASA_stats{j}.performanceMeasures.SSE.std = std(LASA_stats{j}.performanceMeasures.SSE.list);
     LASA_stats{j}.performanceMeasures.DTWD.mean = mean(LASA_stats{j}.performanceMeasures.DTWD.list);
     LASA_stats{j}.performanceMeasures.DTWD.std = std(LASA_stats{j}.performanceMeasures.DTWD.list);
+    LASA_stats{j}.performanceMeasures.FD.mean = mean(LASA_stats{j}.performanceMeasures.FD.list);
+    LASA_stats{j}.performanceMeasures.FD.std = std(LASA_stats{j}.performanceMeasures.FD.list);
 end
 
-save([LASAResultsFolderName '\aggregate_results\LASA_aggregregate_evaluation.mat'],'LASA_stats');
+save([saveFolderName '\aggregate_results\LASA_aggregregate_evaluation.mat'],'LASA_stats');

@@ -12,7 +12,7 @@ LASA_obj = load('C:\Harish\Code\SkillLearning-using-Optimization\results\LASA_da
 
 % plot results
 figure('Name','LASA Datset','units','normalized','outerposition',[0 0 1 1]);
-subplot(1,3,1);
+subplot(1,4,1);
 boxplot(LASA_obj.SEA_list,'symbol','') % do not plot outliers
 set(findobj(gca,'type','line'),'linew',2)
 hold on
@@ -29,7 +29,25 @@ title('Swept Error Area (m^2)','FontSize',20)
 xticklabels({'Cartesian','Tangent','Laplace','Uniform','Learned'})
 xtickangle(45)
 
-subplot(1,3,2);
+subplot(1,4,2);
+boxplot(LASA_obj.FD_list,'symbol','')
+set(findobj(gca,'type','line'),'linew',2)
+hold on
+h = findobj(gca,'Tag','Box');
+for j=1:length(h)
+ h(j).Color = zeros(1,3); % black borders   
+ p_obj(j) = patch(get(h(j),'XData'),get(h(j),'YData'),'y','FaceColor',linecolors(j,:),'FaceAlpha',1); % fill the boxes
+ p_obj(j).ZData = -ones(size(get(h(j),'XData'))); % send boxes to the back
+end
+plot(mean(LASA_obj.FD_list),'p','color',[0.6 0.2 0],'LineWidth',2,'MarkerSize',6)
+set(gca,'FontSize',25)
+% ylabel('Dynamic Time Warping Distance')
+title('Frechet Distance','FontSize',20)
+xticklabels({'Cartesian','Tangent','Laplace','Uniform','Learned'})
+xtickangle(45)
+
+
+subplot(1,4,3);
 boxplot(LASA_obj.SSE_list,'symbol','')
 set(findobj(gca,'type','line'),'linew',2)
 hold on
@@ -46,7 +64,7 @@ title('Sum of Squared Distances (m^2)','FontSize',20)
 xticklabels({'Cartesian','Tangent','Laplace','Uniform','Learned'})
 xtickangle(45)
 
-subplot(1,3,3);
+subplot(1,4,4);
 boxplot(LASA_obj.DTWD_list,'symbol','')
 set(findobj(gca,'type','line'),'linew',2)
 hold on
