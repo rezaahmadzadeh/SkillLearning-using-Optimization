@@ -11,5 +11,5 @@ SEA = 0; % initial error to zero
 
 % sum over the samples
 for t = 1:(size(traj_1,2)-1)
-    SEA = SEA+polyarea([traj_1(1,t),traj_1(1,t+1),traj_2(1,t),traj_2(1,t+1)],[traj_1(2,t),traj_1(2,t+1),traj_2(2,t),traj_2(2,t+1)]);
+    SEA = SEA+polyarea([traj_1(1,t),traj_1(1,t+1),traj_2(1,t+1),traj_2(1,t)],[traj_1(2,t),traj_1(2,t+1),traj_2(2,t+1),traj_2(2,t)]);
 end
